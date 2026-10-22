@@ -1,36 +1,376 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Factory Management</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f1f5f9;
-      text-align: center;
-      padding: 60px 20px;
-      color: #1e293b;
-    }
-    .card {
-      background: white;
-      max-width: 600px;
-      margin: auto;
-      padding: 35px;
-      border-radius: 16px;
-      box-shadow: 0 4px 18px #0001;
-    }
-    h1 { color: #123b70; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Management System | Dashboard</title>
+<style>
+:root{
+  --navy:#102746;--navy2:#17365c;--blue:#1769ff;--blue-soft:#eaf2ff;
+  --bg:#f3f6fb;--text:#172b4d;--muted:#71819a;--line:#e5ebf3;--white:#fff;
+  --green:#16a673;--green-soft:#e4f8ef;--amber:#d98b00;--amber-soft:#fff4d8;
+  --red:#d9485f;--red-soft:#ffe9ec;--purple:#8757e5;--purple-soft:#f1eaff;
+  --shadow:0 8px 24px rgba(20,45,80,.055);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;font-size:14px}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:252px;background:linear-gradient(180deg,var(--navy),#0d203b);color:#eaf1ff;display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;z-index:20;transition:width .22s;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:12px;padding:23px 19px 22px;border-bottom:1px solid rgba(255,255,255,.12);min-height:90px}
+.brand-mark{width:38px;height:38px;display:grid;grid-template-columns:repeat(3,1fr);gap:3px;flex-shrink:0}
+.brand-mark i{background:#4ee17b;border-radius:2px;box-shadow:0 0 8px #4ee17b22}
+.brand-title{font-size:14px;font-weight:750;line-height:1.25;letter-spacing:.1px}
+.brand-sub{font-size:10px;color:#9db2d1;margin-top:5px;letter-spacing:.3px}
+.nav-label{padding:20px 20px 8px;color:#7f9abe;text-transform:uppercase;font-size:10px;font-weight:800;letter-spacing:1.3px}
+.nav{padding:0 10px;display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:transparent;color:#c9d7ec;text-align:left;padding:11px 12px;border-radius:9px;font-weight:550;transition:.15s}
+.nav button:hover{background:#ffffff12;color:white}
+.nav button.active{background:linear-gradient(100deg,#1874ff,#0755e8);color:white;box-shadow:0 5px 14px #005cff35}
+.nav .ico{width:21px;text-align:center;font-size:17px;flex-shrink:0}
+.nav .nav-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav .count{margin-left:auto;font-size:10px;padding:2px 6px;border-radius:20px;background:#ffffff1b}
+.sidebar-foot{margin-top:auto;padding:16px 17px;border-top:1px solid #ffffff18;color:#91a7c6;font-size:11px;line-height:1.5}
+.main{margin-left:252px;width:calc(100% - 252px);min-width:0;transition:margin .22s,width .22s}
+.topbar{height:70px;background:#ffffffed;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 27px;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px)}
+.top-left,.top-actions{display:flex;align-items:center;gap:14px}
+.icon-btn{border:1px solid var(--line);background:#fff;color:#526580;width:37px;height:37px;border-radius:10px;display:grid;place-items:center;font-size:17px}
+.icon-btn:hover{border-color:#b8cdf0;color:var(--blue)}
+.crumb{font-size:12px;color:var(--muted)}.crumb strong{color:var(--text);font-weight:700}
+.global-search{position:relative}
+.global-search input{width:230px;padding:10px 12px 10px 35px;border:1px solid var(--line);border-radius:10px;background:#f9fbfe;outline:none}
+.global-search input:focus{border-color:#8bb4ff;background:white;box-shadow:0 0 0 3px #1769ff12}
+.global-search span{position:absolute;left:12px;top:9px;color:#8a9ab2}
+.notification{position:relative}
+.notification .dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:#f15a72;border-radius:50%;border:1px solid white}
+.avatar{width:35px;height:35px;border-radius:50%;display:grid;place-items:center;background:#e5edff;color:#2355a6;font-weight:800}
+.user-meta{line-height:1.2}.user-meta strong{font-size:12px}.user-meta small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.content{padding:27px 28px 36px;max-width:1700px;margin:auto}
+.page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
+.eyebrow{color:var(--blue);font-size:11px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;margin-bottom:7px}
+h1{font-size:27px;line-height:1.2;margin:0;letter-spacing:-.8px;color:#102746}
+.subtitle{color:var(--muted);margin-top:7px;font-size:13px}
+.head-actions{display:flex;gap:9px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:white;color:#304561;padding:10px 13px;border-radius:9px;font-weight:650;display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 1px #122b4d05}
+.btn:hover{border-color:#b8cbed;background:#fbfdff}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:white;box-shadow:0 5px 12px #1769ff24}
+.btn.primary:hover{background:#0759e6}
+.btn.small{font-size:11px;padding:7px 10px}
+.period{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px}
+.period button{border:0;background:transparent;color:var(--muted);border-radius:7px;padding:7px 10px;font-size:11px;font-weight:700}
+.period button.active{background:var(--blue-soft);color:var(--blue)}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:20px}
+.kpi{position:relative;overflow:hidden;background:#fff;border:1px solid #e9eef6;border-radius:14px;padding:18px 18px 16px;box-shadow:var(--shadow);min-height:137px}
+.kpi-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.kpi-label{font-size:12px;color:#627590;font-weight:650}
+.kpi-icon{width:39px;height:39px;display:grid;place-items:center;border-radius:12px;font-size:19px}
+.kpi-value{font-size:29px;font-weight:800;letter-spacing:-1px;margin-top:11px;line-height:1.1}
+.kpi-foot{font-size:10px;color:var(--muted);margin-top:9px;display:flex;align-items:center;gap:5px}
+.up{color:var(--green);font-weight:800}.down{color:var(--red);font-weight:800}
+.kpi-spark{position:absolute;right:12px;bottom:14px;display:flex;gap:3px;align-items:flex-end;height:35px;opacity:.55}
+.kpi-spark i{display:block;width:6px;border-radius:3px 3px 0 0;background:currentColor}
+.kpi.blue .kpi-icon{background:var(--blue-soft);color:var(--blue)}.kpi.blue{color:var(--blue)}
+.kpi.green .kpi-icon{background:var(--green-soft);color:var(--green)}.kpi.green{color:var(--green)}
+.kpi.amber .kpi-icon{background:var(--amber-soft);color:var(--amber)}.kpi.amber{color:var(--amber)}
+.kpi.purple .kpi-icon{background:var(--purple-soft);color:var(--purple)}.kpi.purple{color:var(--purple)}
+.kpi .kpi-value,.kpi .kpi-label,.kpi .kpi-foot{color:var(--text)}.kpi .kpi-label,.kpi .kpi-foot{color:#627590}
+.grid-two{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:18px;margin-bottom:19px}
+.panel{background:white;border:1px solid #e8edf5;border-radius:14px;box-shadow:var(--shadow);min-width:0}
+.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:19px 20px 13px}
+.panel-title{font-size:14px;font-weight:800;color:#183252}.panel-sub{font-size:11px;color:var(--muted);margin-top:5px}
+.panel-body{padding:0 20px 19px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:#72829a}
+.legend span{display:flex;align-items:center;gap:5px}.legend i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.chart-wrap{width:100%;height:218px}
+.chart-wrap svg{width:100%;height:100%;overflow:visible}
+.chart-label{font-size:10px;fill:#8a98ad}
+.chart-grid{stroke:#edf1f6;stroke-width:1}
+.chart-line{fill:none;stroke:#1769ff;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-line2{fill:none;stroke:#16a673;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.chart-area{fill:url(#areaBlue);opacity:.7}
+.donut-area{display:flex;align-items:center;gap:23px;justify-content:center;min-height:210px}
+.donut{width:154px;height:154px;position:relative;flex-shrink:0}
+.donut svg{width:100%;height:100%;transform:rotate(-90deg)}
+.donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.donut-center strong{font-size:27px;letter-spacing:-1px}.donut-center small{color:var(--muted);font-size:10px;margin-top:3px}
+.donut-legend{display:flex;flex-direction:column;gap:14px;min-width:105px}
+.donut-legend div{display:grid;grid-template-columns:8px 1fr auto;gap:7px;align-items:center;font-size:11px;color:#61738e}
+.donut-legend i{width:8px;height:8px;border-radius:3px}.donut-legend b{color:#1b3151;font-size:11px}
+.bottom-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,1fr);gap:18px}
+.table-panel{overflow:hidden}
+.table-toolbar{padding:0 20px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.field{border:1px solid var(--line);background:#fff;border-radius:8px;padding:9px 10px;color:#435873;outline:none;min-width:0}
+.field:focus{border-color:#9bbdff;box-shadow:0 0 0 3px #1769ff10}
+.search-field{width:220px}
+.table-scroll{overflow:auto;border-top:1px solid var(--line)}
+table{width:100%;border-collapse:collapse;white-space:nowrap}
+th{font-size:10px;color:#687d99;background:#f6f9fd;text-align:left;padding:12px 15px;font-weight:800;border-bottom:1px solid var(--line)}
+td{padding:12px 15px;border-bottom:1px solid #edf1f6;font-size:11px;color:#425773}
+tbody tr:hover{background:#f9fbff}
+tbody tr:last-child td{border-bottom:0}
+.status{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border-radius:20px;font-size:10px;font-weight:750}
+.status:before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.status.ok{background:var(--green-soft);color:#12885e}.status.warn{background:var(--amber-soft);color:#a56b00}.status.bad{background:var(--red-soft);color:#c33950}.status.info{background:var(--blue-soft);color:#1769ff}
+.table-foot{padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid var(--line);color:var(--muted);font-size:10px;flex-wrap:wrap}
+.pagination{display:flex;gap:5px}.pagination button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:6px 9px;color:#50637e;font-size:10px}.pagination button.active{background:var(--blue);border-color:var(--blue);color:white}
+.supplier-list{display:flex;flex-direction:column;gap:0}
+.supplier-row{display:flex;align-items:center;gap:10px;padding:13px 0;border-bottom:1px solid #edf1f6}
+.supplier-row:last-child{border-bottom:0}
+.supplier-avatar{width:34px;height:34px;border-radius:10px;background:#eef4ff;color:#2e62bd;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0}
+.supplier-info{min-width:0;flex:1}.supplier-info strong{font-size:11px;display:block}.supplier-info small{font-size:10px;color:var(--muted);display:block;margin-top:4px}
+.progress{height:5px;border-radius:5px;background:#edf1f6;margin-top:7px;overflow:hidden}.progress i{height:100%;display:block;border-radius:5px;background:var(--blue)}
+.supplier-score{font-size:11px;font-weight:800;color:#263d5d}
+.quick-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:19px}
+.quick{background:#fff;border:1px solid #e8edf5;border-radius:12px;padding:15px;display:flex;align-items:center;gap:10px;text-align:left;box-shadow:var(--shadow);color:var(--text)}
+.quick:hover{border-color:#bdd1f5;transform:translateY(-1px)}
+.quick .qicon{width:35px;height:35px;border-radius:10px;background:#edf4ff;color:var(--blue);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.quick strong{display:block;font-size:11px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.footer-note{margin-top:23px;display:flex;justify-content:space-between;gap:12px;color:#91a0b5;font-size:10px}
+.toast{position:fixed;right:24px;bottom:24px;background:#102746;color:white;border-radius:10px;padding:13px 16px;box-shadow:0 10px 35px #10274635;z-index:99;max-width:330px;display:none}
+.mobile-overlay{display:none}
+body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.collapsed .brand-copy,body.collapsed .nav-label,body.collapsed .nav-text,body.collapsed .count,body.collapsed .sidebar-foot{display:none}body.collapsed .nav{padding:0 10px}body.collapsed .nav button{justify-content:center;padding:12px 5px}body.collapsed .nav .ico{font-size:19px}body.collapsed .main{margin-left:76px;width:calc(100% - 76px)}
+@media(max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-two,.bottom-grid{grid-template-columns:1fr}.content{padding:22px}.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){
+ .sidebar{transform:translateX(-100%);width:252px!important}.main{margin-left:0!important;width:100%!important}
+ body.mobile-nav-open .sidebar{transform:translateX(0)}.mobile-overlay{display:none;position:fixed;inset:0;background:#0c1c32a8;z-index:15}body.mobile-nav-open .mobile-overlay{display:block}
+ body.collapsed .sidebar{width:252px!important}body.collapsed .brand-copy,body.collapsed .nav-label,body.collapsed .nav-text,body.collapsed .count,body.collapsed .sidebar-foot{display:block}
+ .topbar{padding:0 14px;height:62px}.global-search{display:none}.user-meta{display:none}.content{padding:20px 13px 28px}
+ .page-head{flex-direction:column}.head-actions{width:100%}.head-actions .btn{flex:1;justify-content:center}
+ h1{font-size:23px}.kpis{gap:10px}.kpi{padding:14px;min-height:125px}.kpi-value{font-size:25px}.kpi-spark{opacity:.25}
+ .panel-head{padding:16px 15px 12px}.panel-body{padding:0 14px 15px}.table-toolbar{padding:0 14px 12px}.search-field{width:100%}.filters{width:100%}.filters .field{flex:1}
+ .donut-area{gap:12px}.donut{width:130px;height:130px}.donut-legend{min-width:90px}
+ .quick-actions{gap:9px}.quick{padding:11px;gap:8px}.quick .qicon{width:31px;height:31px}.footer-note{flex-direction:column}
+}
+@media(max-width:420px){.kpis{grid-template-columns:1fr 1fr}.kpi-label{font-size:11px}.kpi-value{font-size:23px}.kpi-foot{font-size:9px}.quick-actions{grid-template-columns:1fr 1fr}.period button{padding:6px 7px}}
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>Factory Management System</h1>
-    <p>Garments Factory — Centralized Dashboard</p>
-    <p>Fabric Store | Accessories Store | Cutting | Printing</p>
-    <p>Embroidery | Sewing | Finishing | QA/QMS</p>
-    <p>Website deployment successful.</p>
-  </div>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <div class="brand-copy"><div class="brand-title">Factory Management<br>System</div><div class="brand-sub">GARMENT FACTORY ERP</div></div>
+    </div>
+    <div class="nav-label">Workspace</div>
+    <nav class="nav" id="mainNav">
+      <button class="active" data-page="Dashboard"><span class="ico">▦</span><span class="nav-text">Dashboard</span></button>
+      <button data-page="Order Management"><span class="ico">▤</span><span class="nav-text">Order Management</span></button>
+      <button data-page="Material"><span class="ico">▣</span><span class="nav-text">Material</span></button>
+      <button data-page="Production"><span class="ico">⚙</span><span class="nav-text">Production</span></button>
+      <button data-page="Inspection"><span class="ico">⌕</span><span class="nav-text">Inspection</span></button>
+      <button data-page="Quality"><span class="ico">⬡</span><span class="nav-text">Quality & QMS</span></button>
+      <button data-page="Shipment"><span class="ico">▰</span><span class="nav-text">Shipment</span></button>
+      <button data-page="Sample"><span class="ico">◈</span><span class="nav-text">Sample</span></button>
+      <button data-page="Reports"><span class="ico">▥</span><span class="nav-text">Reports & Analytics</span></button>
+      <button data-page="Claim & CAP"><span class="ico">⚠</span><span class="nav-text">Claim & CAP</span><span class="count">4</span></button>
+      <button data-page="Audit & Visit"><span class="ico">▧</span><span class="nav-text">Audit & Visit</span></button>
+    </nav>
+    <div class="nav-label">System</div>
+    <nav class="nav">
+      <button data-page="Notifications"><span class="ico">♧</span><span class="nav-text">Notifications</span><span class="count">3</span></button>
+      <button data-page="Excel Import"><span class="ico">⇧</span><span class="nav-text">Excel Import</span></button>
+      <button data-page="Master Settings"><span class="ico">⚙</span><span class="nav-text">Master Settings</span></button>
+    </nav>
+    <div class="sidebar-foot">Factory ERP · UI Preview v1.0<br>Data shown is sample/demo data.</div>
+  </aside>
+  <div class="mobile-overlay" id="overlay"></div>
+  <main class="main">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="icon-btn" id="menuToggle" aria-label="Toggle menu">☰</button>
+        <div class="crumb">Workspace&nbsp; / &nbsp;<strong id="crumbPage">Dashboard</strong></div>
+      </div>
+      <div class="top-actions">
+        <div class="global-search"><span>⌕</span><input id="globalSearch" placeholder="Search anything..." aria-label="Search anything"></div>
+        <button class="icon-btn notification" id="notificationsBtn" title="Notifications">♧<i class="dot"></i></button>
+        <div class="avatar">A</div>
+        <div class="user-meta"><strong>Ashraf</strong><small>Administrator · Demo</small></div>
+        <button class="icon-btn" id="profileBtn" title="Profile menu">⌄</button>
+      </div>
+    </header>
+    <section class="content">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Factory overview</div>
+          <h1 id="pageTitle">Dashboard Overview</h1>
+          <div class="subtitle" id="pageSubtitle">A real-time view of factory operations, materials and quality performance.</div>
+        </div>
+        <div class="head-actions">
+          <div class="period" aria-label="Date range">
+            <button class="active" data-range="7D">7 Days</button><button data-range="30D">30 Days</button><button data-range="90D">90 Days</button>
+          </div>
+          <button class="btn" id="exportBtn">⇩ Export</button>
+          <button class="btn primary" id="addBtn">＋ Quick Entry</button>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <article class="kpi blue">
+          <div class="kpi-top"><div class="kpi-label">Total Orders</div><div class="kpi-icon">▤</div></div>
+          <div class="kpi-value" id="kpiOrders">641</div>
+          <div class="kpi-foot"><span class="up">↗ 8.4%</span> vs previous period</div>
+          <div class="kpi-spark"><i style="height:14px"></i><i style="height:19px"></i><i style="height:17px"></i><i style="height:26px"></i><i style="height:22px"></i><i style="height:31px"></i></div>
+        </article>
+        <article class="kpi green">
+          <div class="kpi-top"><div class="kpi-label">Planned Production</div><div class="kpi-icon">▦</div></div>
+          <div class="kpi-value">128,450</div>
+          <div class="kpi-foot"><span class="up">↗ 5.2%</span> pcs planned</div>
+          <div class="kpi-spark"><i style="height:11px"></i><i style="height:18px"></i><i style="height:23px"></i><i style="height:19px"></i><i style="height:28px"></i><i style="height:34px"></i></div>
+        </article>
+        <article class="kpi amber">
+          <div class="kpi-top"><div class="kpi-label">Quality Rejection</div><div class="kpi-icon">◉</div></div>
+          <div class="kpi-value">2.48%</div>
+          <div class="kpi-foot"><span class="up">↓ 0.6%</span> improvement</div>
+          <div class="kpi-spark"><i style="height:31px"></i><i style="height:26px"></i><i style="height:24px"></i><i style="height:18px"></i><i style="height:15px"></i><i style="height:10px"></i></div>
+        </article>
+        <article class="kpi purple">
+          <div class="kpi-top"><div class="kpi-label">Pending Actions</div><div class="kpi-icon">◷</div></div>
+          <div class="kpi-value">18</div>
+          <div class="kpi-foot"><span class="down">6 overdue</span> require attention</div>
+          <div class="kpi-spark"><i style="height:13px"></i><i style="height:17px"></i><i style="height:13px"></i><i style="height:24px"></i><i style="height:29px"></i><i style="height:34px"></i></div>
+        </article>
+      </div>
+
+      <div class="grid-two">
+        <section class="panel">
+          <div class="panel-head">
+            <div><div class="panel-title">Production & Quality Trend</div><div class="panel-sub">Daily output and first-pass quality overview</div></div>
+            <div class="legend"><span><i style="background:#1769ff"></i>Production (pcs)</span><span><i style="background:#16a673"></i>Pass rate (%)</span></div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap">
+              <svg viewBox="0 0 650 220" role="img" aria-label="Production and quality trend chart">
+                <defs><linearGradient id="areaBlue" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#1769ff" stop-opacity=".18"/><stop offset="100%" stop-color="#1769ff" stop-opacity="0"/></linearGradient></defs>
+                <g class="chart-grid"><line x1="42" y1="25" x2="625" y2="25"/><line x1="42" y1="65" x2="625" y2="65"/><line x1="42" y1="105" x2="625" y2="105"/><line x1="42" y1="145" x2="625" y2="145"/><line x1="42" y1="185" x2="625" y2="185"/></g>
+                <g class="chart-label"><text x="4" y="29">8k</text><text x="4" y="69">6k</text><text x="4" y="109">4k</text><text x="4" y="149">2k</text><text x="13" y="189">0</text>
+                  <text x="42" y="207">Mon</text><text x="135" y="207">Tue</text><text x="228" y="207">Wed</text><text x="321" y="207">Thu</text><text x="414" y="207">Fri</text><text x="507" y="207">Sat</text><text x="600" y="207">Sun</text></g>
+                <path class="chart-area" d="M42 132 L135 102 L228 116 L321 72 L414 89 L507 48 L600 58 L600 185 L42 185 Z"/>
+                <path class="chart-line" d="M42 132 L135 102 L228 116 L321 72 L414 89 L507 48 L600 58"/>
+                <path class="chart-line2" d="M42 80 L135 69 L228 75 L321 57 L414 63 L507 43 L600 48"/>
+                <g fill="#1769ff" stroke="#fff" stroke-width="2"><circle cx="42" cy="132" r="4"/><circle cx="135" cy="102" r="4"/><circle cx="228" cy="116" r="4"/><circle cx="321" cy="72" r="4"/><circle cx="414" cy="89" r="4"/><circle cx="507" cy="48" r="4"/><circle cx="600" cy="58" r="4"/></g>
+              </svg>
+            </div>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><div class="panel-title">Inspection Status</div><div class="panel-sub">Current inspection distribution</div></div><button class="btn small" id="inspectionDetails">View details ↗</button></div>
+          <div class="panel-body">
+            <div class="donut-area">
+              <div class="donut">
+                <svg viewBox="0 0 160 160" aria-label="Inspection status donut">
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#edf1f7" stroke-width="18"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#16a673" stroke-width="18" stroke-dasharray="226 377" stroke-linecap="round"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#1769ff" stroke-width="18" stroke-dasharray="92 377" stroke-dashoffset="-237" stroke-linecap="round"/>
+                  <circle cx="80" cy="80" r="60" fill="none" stroke="#f3ad22" stroke-width="18" stroke-dasharray="38 377" stroke-dashoffset="-337" stroke-linecap="round"/>
+                </svg>
+                <div class="donut-center"><strong>356</strong><small>Total checks</small></div>
+              </div>
+              <div class="donut-legend">
+                <div><i style="background:#16a673"></i><span>Passed</span><b>60%</b></div>
+                <div><i style="background:#1769ff"></i><span>In progress</span><b>24%</b></div>
+                <div><i style="background:#f3ad22"></i><span>Pending</span><b>10%</b></div>
+                <div><i style="background:#e3e9f1"></i><span>Other</span><b>6%</b></div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="bottom-grid">
+        <section class="panel table-panel">
+          <div class="panel-head"><div><div class="panel-title">Recent Factory Activity</div><div class="panel-sub">Latest entries across departments</div></div><button class="btn small" id="viewAllBtn">View all ↗</button></div>
+          <div class="table-toolbar">
+            <div class="filters"><input class="field search-field" id="tableSearch" placeholder="Search buyer, style, section..."><select class="field" id="sectionFilter"><option value="">All sections</option><option>Fabric Store</option><option>Accessories Store</option><option>Cutting</option><option>Printing</option><option>Sewing</option><option>QA/QMS</option></select></div>
+            <button class="btn small" id="clearFilter">Clear filters</button>
+          </div>
+          <div class="table-scroll">
+            <table id="activityTable">
+              <thead><tr><th>Reference</th><th>Section</th><th>Activity</th><th>Date</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr data-section="Fabric Store"><td><strong>FAB-26041</strong></td><td>Fabric Store</td><td>Bulk fabric received</td><td>22 Oct 2026</td><td><span class="status ok">Completed</span></td></tr>
+                <tr data-section="Accessories Store"><td><strong>ACC-26018</strong></td><td>Accessories Store</td><td>Trims inspection</td><td>22 Oct 2026</td><td><span class="status warn">In review</span></td></tr>
+                <tr data-section="Cutting"><td><strong>CUT-26072</strong></td><td>Cutting</td><td>Panel rejection review</td><td>21 Oct 2026</td><td><span class="status bad">Action needed</span></td></tr>
+                <tr data-section="Printing"><td><strong>PRT-26026</strong></td><td>Printing</td><td>Print wash test</td><td>21 Oct 2026</td><td><span class="status ok">Passed</span></td></tr>
+                <tr data-section="Sewing"><td><strong>SEW-26105</strong></td><td>Sewing</td><td>End-line inspection</td><td>21 Oct 2026</td><td><span class="status info">In progress</span></td></tr>
+                <tr data-section="QA/QMS"><td><strong>QMS-26014</strong></td><td>QA/QMS</td><td>Corrective action follow-up</td><td>20 Oct 2026</td><td><span class="status warn">Due soon</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-foot"><span id="rowCount">Showing 6 demo records</span><div class="pagination"><button class="active">1</button><button id="nextPage">Next →</button></div></div>
+        </section>
+        <section class="panel">
+          <div class="panel-head"><div><div class="panel-title">Supplier Performance</div><div class="panel-sub">Quality rating by recent inspections</div></div><button class="btn small" id="supplierDetails">Details ↗</button></div>
+          <div class="panel-body">
+            <div class="supplier-list">
+              <div class="supplier-row"><div class="supplier-avatar">ST</div><div class="supplier-info"><strong>Supplier Textile Ltd.</strong><small>Fabric · 42 inspections</small><div class="progress"><i style="width:96%"></i></div></div><div class="supplier-score">96%</div></div>
+              <div class="supplier-row"><div class="supplier-avatar" style="background:#e5faf2;color:#13865f">AC</div><div class="supplier-info"><strong>Accessories Co.</strong><small>Trims · 31 inspections</small><div class="progress"><i style="width:92%;background:#16a673"></i></div></div><div class="supplier-score">92%</div></div>
+              <div class="supplier-row"><div class="supplier-avatar" style="background:#fff3db;color:#a86d00">DY</div><div class="supplier-info"><strong>Dynamic Dyeing</strong><small>Dyeing · 26 inspections</small><div class="progress"><i style="width:88%;background:#e5a323"></i></div></div><div class="supplier-score">88%</div></div>
+              <div class="supplier-row"><div class="supplier-avatar" style="background:#f0eaff;color:#7850cb">PR</div><div class="supplier-info"><strong>PrintRight Industries</strong><small>Printing · 18 inspections</small><div class="progress"><i style="width:84%;background:#8757e5"></i></div></div><div class="supplier-score">84%</div></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="quick-actions">
+        <button class="quick" data-quick="Fabric Store"><span class="qicon">▣</span><span><strong>Fabric Store</strong><small>Stock & inspection</small></span></button>
+        <button class="quick" data-quick="Accessories Store"><span class="qicon">▤</span><span><strong>Accessories Store</strong><small>Trims & accessories</small></span></button>
+        <button class="quick" data-quick="QA/QMS"><span class="qicon">⬡</span><span><strong>QA / QMS</strong><small>Quality & CAP tracking</small></span></button>
+        <button class="quick" data-quick="Reports"><span class="qicon">▥</span><span><strong>Reports Center</strong><small>Export & analytics</small></span></button>
+      </div>
+      <div class="footer-note"><span>Factory Management System · UI demonstration</span><span>Demo figures only — connect database before operational use.</span></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const toastEl=document.getElementById('toast');
+let toastTimer;
+function toast(message){toastEl.textContent=message;toastEl.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.style.display='none',3200)}
+const pageInfo={
+'Dashboard':['Dashboard Overview','A real-time view of factory operations, materials and quality performance.'],
+'Order Management':['Order Management','Central order master, PO tracking and shipment planning.'],
+'Material':['Material Management','Fabric, trims, stock movement and supplier receipt overview.'],
+'Production':['Production Overview','Production planning, output tracking and line performance.'],
+'Inspection':['Inspection Management','Incoming, in-line and end-line inspection activities.'],
+'Quality':['Quality & QMS','Defect analysis, DHU, OQL, corrective actions and audit readiness.'],
+'Shipment':['Shipment Tracking','Planned shipment dates, order status and dispatch visibility.'],
+'Sample':['Sample Management','Sample status, approvals and development milestones.'],
+'Reports':['Reports & Analytics','Department performance, exportable reports and trends.'],
+'Claim & CAP':['Claim & Corrective Action','Buyer claims, CAP ownership and overdue follow-up.'],
+'Audit & Visit':['Audit & Visit','Audit schedules, findings, action owners and closure status.'],
+'Notifications':['Notifications Center','Alerts for pending inspections, overdue actions and critical issues.'],
+'Excel Import':['Excel Import Center','Upload and validate department data using approved templates.'],
+'Master Settings':['Master Settings','Configure sections, users, buyers, suppliers and reference lists.']
+};
+document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+ const page=btn.dataset.page, info=pageInfo[page]||[page,'Factory operations workspace.'];
+ document.getElementById('pageTitle').textContent=info[0];document.getElementById('pageSubtitle').textContent=info[1];document.getElementById('crumbPage').textContent=page;
+ if(page!=='Dashboard')toast(page+' selected — this is the UI demo; module functionality will be added next.');
+ document.body.classList.remove('mobile-nav-open');
+}));
+document.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{const name=btn.dataset.quick;const nav=[...document.querySelectorAll('[data-page]')].find(b=>b.dataset.page===name|| (name==='QA/QMS'&&b.dataset.page==='Quality'));if(nav)nav.click();else toast(name+' selected — module setup is next.')}));
+document.getElementById('menuToggle').addEventListener('click',()=>{
+ if(window.innerWidth<=760){document.body.classList.toggle('mobile-nav-open')}else{document.body.classList.toggle('collapsed')}
+});
+document.getElementById('overlay').addEventListener('click',()=>document.body.classList.remove('mobile-nav-open'));
+document.querySelectorAll('[data-range]').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('[data-range]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');toast('Date range changed to '+btn.dataset.range+' — sample chart currently displayed.');}));
+const search=document.getElementById('tableSearch'), sectionFilter=document.getElementById('sectionFilter');
+function filterRows(){let q=search.value.toLowerCase().trim(),sec=sectionFilter.value,visible=0;document.querySelectorAll('#activityTable tbody tr').forEach(row=>{const matchText=row.textContent.toLowerCase().includes(q),matchSec=!sec||row.dataset.section===sec;const show=matchText&&matchSec;row.style.display=show?'':'none';if(show)visible++});document.getElementById('rowCount').textContent='Showing '+visible+' demo record'+(visible===1?'':'s')}
+search.addEventListener('input',filterRows);sectionFilter.addEventListener('change',filterRows);
+document.getElementById('clearFilter').addEventListener('click',()=>{search.value='';sectionFilter.value='';filterRows()});
+document.getElementById('exportBtn').addEventListener('click',()=>{
+ const rows=[...document.querySelectorAll('#activityTable tr')].filter(r=>r.style.display!=='none');
+ const csv=rows.map(r=>[...r.querySelectorAll('th,td')].map(c=>'"'+c.innerText.replace(/"/g,'""').replace(/\n/g,' ')+'"').join(',')).join('\r\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='factory-activity-demo.csv';a.click();URL.revokeObjectURL(url);toast('CSV export downloaded. Demo data only.');
+});
+document.getElementById('addBtn').addEventListener('click',()=>toast('Quick Entry form will be connected to the database in the next phase.'));
+document.getElementById('notificationsBtn').addEventListener('click',()=>toast('Notifications: 3 demo alerts — one CAP overdue, one inspection review, one stock warning.'));
+document.getElementById('profileBtn').addEventListener('click',()=>toast('Demo administrator profile. Secure login will be added before real data is used.'));
+['inspectionDetails','viewAllBtn','supplierDetails','nextPage'].forEach(id=>document.getElementById(id).addEventListener('click',()=>toast('This action is a UI placeholder; live records and pagination will be added with the database.')));
+document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){search.value=e.target.value;filterRows();document.getElementById('tableSearch').focus();toast('Activity table searched for: '+e.target.value)}});
+</script>
 </body>
 </html>
