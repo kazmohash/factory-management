@@ -144,6 +144,21 @@ body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.
  .quick-actions{gap:9px}.quick{padding:11px;gap:8px}.quick .qicon{width:31px;height:31px}.footer-note{flex-direction:column}
 }
 @media(max-width:420px){.kpis{grid-template-columns:1fr 1fr}.kpi-label{font-size:11px}.kpi-value{font-size:23px}.kpi-foot{font-size:9px}.quick-actions{grid-template-columns:1fr 1fr}.period button{padding:6px 7px}}
+
+.employee-page[hidden],.employee-form-panel[hidden],.transfer-panel[hidden]{display:none!important}
+.employee-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:19px}
+.employee-stat{background:#fff;border:1px solid #e8edf5;border-radius:13px;padding:17px 18px;box-shadow:var(--shadow)}
+.employee-stat span{display:block;color:#627590;font-size:11px;font-weight:700}.employee-stat strong{display:block;color:#102746;font-size:27px;margin:7px 0 3px}.employee-stat small{color:var(--muted);font-size:10px}
+/* Query 79: Keep form headings visible below the sticky top navigation */
+.employee-form-panel,.transfer-panel{margin-bottom:18px;scroll-margin-top:92px}.employee-form{padding:5px 20px 20px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}
+.employee-form label{display:flex;flex-direction:column;gap:7px;color:#526680;font-size:11px;font-weight:750}.employee-form label b{color:#d9485f;display:inline}
+.employee-form .field{width:100%;min-height:39px;font-size:12px}.employee-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:9px;padding-top:4px}
+.employee-directory{margin-bottom:18px}.employee-filters{width:100%}.employee-filters .search-field{flex:1;min-width:220px}.employee-filters select{min-width:170px}
+.employee-empty{text-align:center!important;padding:30px!important;color:#8190a6!important;white-space:normal!important}.employee-action{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 8px;color:#315276;font-size:10px;margin-right:4px}.employee-action:hover{border-color:#9bbdff;color:var(--blue)}
+.wide-field{grid-column:span 2}.transfer-history{margin-bottom:18px}
+@media(max-width:900px){.employee-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.employee-form{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.employee-stats{gap:9px}.employee-stat{padding:13px}.employee-stat strong{font-size:23px}.employee-form{grid-template-columns:1fr;padding:5px 14px 16px}.wide-field{grid-column:auto}.employee-filters{flex-direction:column}.employee-filters .field{width:100%;min-width:0}.employee-form-actions{justify-content:stretch}.employee-form-actions .btn{flex:1;justify-content:center}}
+
 </style>
 </head>
 <body>
@@ -172,6 +187,7 @@ body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.
       <button data-page="Notifications"><span class="ico">♧</span><span class="nav-text">Notifications</span><span class="count">3</span></button>
       <button data-page="Excel Import"><span class="ico">⇧</span><span class="nav-text">Excel Import</span></button>
       <button data-page="Master Settings"><span class="ico">⚙</span><span class="nav-text">Master Settings</span></button>
+      <button data-page="Employee Master"><span class="ico">♙</span><span class="nav-text">Employee Master</span></button>
     </nav>
     <div class="sidebar-foot">Factory ERP · UI Preview v1.0<br>Data shown is sample/demo data.</div>
   </aside>
@@ -191,6 +207,7 @@ body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.
       </div>
     </header>
     <section class="content">
+      <div id="dashboardPage">
       <div class="page-head">
         <div>
           <div class="eyebrow">Factory overview</div>
@@ -320,6 +337,54 @@ body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.
         <button class="quick" data-quick="Reports"><span class="qicon">▥</span><span><strong>Reports Center</strong><small>Export & analytics</small></span></button>
       </div>
       <div class="footer-note"><span>Factory Management System · UI demonstration</span><span>Demo figures only — connect database before operational use.</span></div>
+      </div><!-- /dashboardPage -->
+      <section id="employeePage" class="employee-page" hidden>
+        <div class="page-head">
+          <div><div class="eyebrow">Human Resource / Master Data</div><h1>Employee Master</h1><div class="subtitle">Manage employee information, department assignments and transfer history.</div></div>
+          <div class="head-actions"><button class="btn" id="employeeExport">⇩ Export</button><button class="btn primary" id="newEmployeeBtn">＋ Add Employee</button></div>
+        </div>
+        <div class="employee-stats">
+          <article class="employee-stat"><span>Total Employees</span><strong id="empTotal">0</strong><small>All registered employees</small></article>
+          <article class="employee-stat"><span>Active Employees</span><strong id="empActive">0</strong><small>Currently active</small></article>
+          <article class="employee-stat"><span>Departments</span><strong>8</strong><small>Available departments</small></article>
+          <article class="employee-stat"><span>Transfers Recorded</span><strong id="empTransfers">0</strong><small>Department movement history</small></article>
+        </div>
+        <section class="panel employee-form-panel" id="employeeFormPanel" hidden>
+          <div class="panel-head"><div><div class="panel-title" id="employeeFormTitle">New Employee</div><div class="panel-sub">Enter employee information. Employee ID must be unique.</div></div><button class="icon-btn" id="closeEmployeeForm" aria-label="Close form">×</button></div>
+          <form id="employeeForm" class="employee-form">
+            <input type="hidden" id="employeeRecordId">
+            <label>Employee ID <b>*</b><input class="field" id="employeeCode" required maxlength="40" placeholder="e.g. 34000120 / EMP00120 / SF-3400120"></label>
+            <label>Employee Name <b>*</b><input class="field" id="employeeName" required maxlength="120" placeholder="Enter full name"></label>
+            <label>Department <b>*</b><select class="field" id="employeeDepartment" required><option value="">Select department</option><option>FAB Fabric Store</option><option>ACC Accessories Store</option><option>CUT Cutting</option><option>PRN Printing</option><option>EMB Embroidery</option><option>SEW Sewing</option><option>FIN Finishing</option><option>QA Quality Assurance</option></select></label>
+            <label>Designation<input class="field" id="employeeDesignation" maxlength="100" placeholder="Enter designation"></label>
+            <label>Mobile Number<input class="field" id="employeeMobile" maxlength="30" placeholder="01XXXXXXXXX"></label>
+            <label>Status<select class="field" id="employeeStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></label>
+            <div class="employee-form-actions"><button type="button" class="btn" id="cancelEmployee">Cancel</button><button type="submit" class="btn primary">Save Employee</button></div>
+          </form>
+        </section>
+        <section class="panel table-panel employee-directory">
+          <div class="panel-head"><div><div class="panel-title">Employee Directory</div><div class="panel-sub">Search and manage employee records</div></div><span class="status info" id="employeeCount">0 records</span></div>
+          <div class="table-toolbar"><div class="filters employee-filters"><input class="field search-field" id="employeeSearch" placeholder="Search ID, name or designation..."><select class="field" id="employeeDeptFilter"><option value="">All departments</option><option>FAB Fabric Store</option><option>ACC Accessories Store</option><option>CUT Cutting</option><option>PRN Printing</option><option>EMB Embroidery</option><option>SEW Sewing</option><option>FIN Finishing</option><option>QA Quality Assurance</option></select><select class="field" id="employeeStatusFilter"><option value="">All status</option><option>Active</option><option>Inactive</option></select></div></div>
+          <div class="table-scroll"><table id="employeeTable"><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Department</th><th>Designation</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead><tbody id="employeeRows"><tr><td colspan="7" class="employee-empty">No employee records yet. Click “Add Employee” to create the first record.</td></tr></tbody></table></div>
+          <div class="table-foot"><span id="employeeRowsCount">Showing 0 employees</span><span>Local preview only · Database integration pending</span></div>
+        </section>
+        <section class="panel transfer-panel" id="transferPanel" hidden>
+          <div class="panel-head"><div><div class="panel-title">Department Transfer</div><div class="panel-sub" id="transferEmployeeLabel">Transfer employee to another department</div></div><button class="icon-btn" id="closeTransfer" aria-label="Close transfer">×</button></div>
+          <form id="transferForm" class="employee-form"><input type="hidden" id="transferEmployeeId">
+            <label>Current Department<input class="field" id="transferFrom" readonly></label>
+            <label>New Department <b>*</b><select class="field" id="transferTo" required><option value="">Select new department</option><option>FAB Fabric Store</option><option>ACC Accessories Store</option><option>CUT Cutting</option><option>PRN Printing</option><option>EMB Embroidery</option><option>SEW Sewing</option><option>FIN Finishing</option><option>QA Quality Assurance</option></select></label>
+            <label>Effective Date <b>*</b><input class="field" type="date" id="transferDate" required></label>
+            <label>Transfer Reason<input class="field" id="transferReason" maxlength="180" placeholder="Reason for transfer"></label>
+            <label class="wide-field">Remarks<textarea class="field" id="transferRemarks" rows="2" placeholder="Additional remarks"></textarea></label>
+            <div class="employee-form-actions"><button type="button" class="btn" id="cancelTransfer">Cancel</button><button type="submit" class="btn primary">Save Transfer (Preview)</button></div>
+          </form>
+        </section>
+        <section class="panel table-panel transfer-history">
+          <div class="panel-head"><div><div class="panel-title">Recent Department Transfers</div><div class="panel-sub">Employee department movement log</div></div></div>
+          <div class="table-scroll"><table><thead><tr><th>Employee ID</th><th>Employee Name</th><th>From Department</th><th>To Department</th><th>Transfer Date</th><th>Reason</th></tr></thead><tbody id="transferRows"><tr><td colspan="6" class="employee-empty">No transfer history available.</td></tr></tbody></table></div>
+        </section>
+        <div class="footer-note"><span>Factory Management System · Employee Master</span><span>Preview data is stored in this browser only. Supabase integration is not active.</span></div>
+      </section>
     </section>
   </main>
 </div>
@@ -342,13 +407,29 @@ const pageInfo={
 'Audit & Visit':['Audit & Visit','Audit schedules, findings, action owners and closure status.'],
 'Notifications':['Notifications Center','Alerts for pending inspections, overdue actions and critical issues.'],
 'Excel Import':['Excel Import Center','Upload and validate department data using approved templates.'],
-'Master Settings':['Master Settings','Configure sections, users, buyers, suppliers and reference lists.']
+'Master Settings':['Master Settings','Configure sections, users, buyers, suppliers and reference lists.'],
+'Employee Master':['Employee Master','Manage employee records, department assignments and transfer history.']
 };
+// Query 78: Correct page routing between Dashboard and Employee Master
 document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>{
- document.querySelectorAll('[data-page]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
- const page=btn.dataset.page, info=pageInfo[page]||[page,'Factory operations workspace.'];
- document.getElementById('pageTitle').textContent=info[0];document.getElementById('pageSubtitle').textContent=info[1];document.getElementById('crumbPage').textContent=page;
- if(page!=='Dashboard')toast(page+' selected — this is the UI demo; module functionality will be added next.');
+ document.querySelectorAll('[data-page]').forEach(b=>b.classList.remove('active'));
+ btn.classList.add('active');
+ const page=btn.dataset.page;
+ const dashboardPage=document.getElementById('dashboardPage');
+ const employeePage=document.getElementById('employeePage');
+ const isEmployeeMaster=page==='Employee Master';
+
+ if(dashboardPage) dashboardPage.hidden=isEmployeeMaster;
+ if(employeePage) employeePage.hidden=!isEmployeeMaster;
+
+ const info=pageInfo[page]||[page,'Factory operations workspace.'];
+ document.getElementById('crumbPage').textContent=page;
+ if(!isEmployeeMaster){
+   document.getElementById('pageTitle').textContent=info[0];
+   document.getElementById('pageSubtitle').textContent=info[1];
+   if(page!=='Dashboard') toast(page+' selected — this module is not implemented yet.');
+ }
+ if(isEmployeeMaster) renderEmployees();
  document.body.classList.remove('mobile-nav-open');
 }));
 document.querySelectorAll('[data-quick]').forEach(btn=>btn.addEventListener('click',()=>{const name=btn.dataset.quick;const nav=[...document.querySelectorAll('[data-page]')].find(b=>b.dataset.page===name|| (name==='QA/QMS'&&b.dataset.page==='Quality'));if(nav)nav.click();else toast(name+' selected — module setup is next.')}));
@@ -371,6 +452,34 @@ document.getElementById('notificationsBtn').addEventListener('click',()=>toast('
 document.getElementById('profileBtn').addEventListener('click',()=>toast('Demo administrator profile. Secure login will be added before real data is used.'));
 ['inspectionDetails','viewAllBtn','supplierDetails','nextPage'].forEach(id=>document.getElementById(id).addEventListener('click',()=>toast('This action is a UI placeholder; live records and pagination will be added with the database.')));
 document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){search.value=e.target.value;filterRows();document.getElementById('tableSearch').focus();toast('Activity table searched for: '+e.target.value)}});
+
+// Query 77: Employee Master frontend preview logic (local browser storage only)
+const EMP_STORE_KEY='factoryManagement.employeeMaster.preview.v1';
+const TRANSFER_STORE_KEY='factoryManagement.employeeTransfers.preview.v1';
+let employeeRecords=JSON.parse(localStorage.getItem(EMP_STORE_KEY)||'[]');
+let transferRecords=JSON.parse(localStorage.getItem(TRANSFER_STORE_KEY)||'[]');
+const empEl=id=>document.getElementById(id);
+function savePreviewData(){localStorage.setItem(EMP_STORE_KEY,JSON.stringify(employeeRecords));localStorage.setItem(TRANSFER_STORE_KEY,JSON.stringify(transferRecords));}
+function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
+function renderEmployees(){
+ const q=empEl('employeeSearch').value.trim().toLowerCase(),dept=empEl('employeeDeptFilter').value,status=empEl('employeeStatusFilter').value;
+ const list=employeeRecords.filter(e=>(!q||[e.code,e.name,e.department,e.designation,e.mobile].join(' ').toLowerCase().includes(q))&&(!dept||e.department===dept)&&(!status||e.status===status));
+ empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr><td><strong>${esc(e.code)}</strong></td><td>${esc(e.name)}</td><td>${esc(e.department)}</td><td>${esc(e.designation||'—')}</td><td>${esc(e.mobile||'—')}</td><td><span class="status ${e.status==='Active'?'ok':'bad'}">${esc(e.status)}</span></td><td><button class="employee-action" data-edit="${esc(e.id)}">Edit</button><button class="employee-action" data-transfer="${esc(e.id)}">Transfer</button></td></tr>`).join(''):'<tr><td colspan="7" class="employee-empty">No matching employee records found.</td></tr>';
+ empEl('employeeCount').textContent=list.length+' records';empEl('employeeRowsCount').textContent=`Showing ${list.length} of ${employeeRecords.length} employees`;
+ empEl('empTotal').textContent=employeeRecords.length;empEl('empActive').textContent=employeeRecords.filter(e=>e.status==='Active').length;empEl('empTransfers').textContent=transferRecords.length;
+ empEl('transferRows').innerHTML=transferRecords.length?[...transferRecords].reverse().slice(0,20).map(t=>`<tr><td><strong>${esc(t.code)}</strong></td><td>${esc(t.name)}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td>${esc(t.date)}</td><td>${esc(t.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="6" class="employee-empty">No transfer history available.</td></tr>';
+}
+function openEmployeeForm(record){empEl('employeeForm').reset();empEl('employeeRecordId').value=record?.id||'';empEl('employeeCode').value=record?.code||'';empEl('employeeCode').disabled=!!record;empEl('employeeName').value=record?.name||'';empEl('employeeDepartment').value=record?.department||'';empEl('employeeDesignation').value=record?.designation||'';empEl('employeeMobile').value=record?.mobile||'';empEl('employeeStatus').value=record?.status||'Active';empEl('employeeFormTitle').textContent=record?'Edit Employee':'New Employee';empEl('employeeFormPanel').hidden=false;empEl('employeeFormPanel').scrollIntoView({behavior:'smooth',block:'start'});}
+function closeEmployeeForm(){empEl('employeeFormPanel').hidden=true;empEl('employeeCode').disabled=false;}
+empEl('newEmployeeBtn').addEventListener('click',()=>openEmployeeForm(null));empEl('closeEmployeeForm').addEventListener('click',closeEmployeeForm);empEl('cancelEmployee').addEventListener('click',closeEmployeeForm);
+empEl('employeeForm').addEventListener('submit',ev=>{ev.preventDefault();const id=empEl('employeeRecordId').value;const code=empEl('employeeCode').value.trim();const duplicate=employeeRecords.some(e=>e.code.toLowerCase()===code.toLowerCase()&&e.id!==id);if(duplicate){toast('This Employee ID already exists.');return;}const record={id:id||('emp_'+Date.now()),code,name:empEl('employeeName').value.trim(),department:empEl('employeeDepartment').value,designation:empEl('employeeDesignation').value.trim(),mobile:empEl('employeeMobile').value.trim(),status:empEl('employeeStatus').value};if(id){const ix=employeeRecords.findIndex(e=>e.id===id);if(ix>=0)employeeRecords[ix]=record;}else employeeRecords.push(record);savePreviewData();renderEmployees();closeEmployeeForm();toast('Employee saved in this browser preview only.');});
+empEl('employeeRows').addEventListener('click',ev=>{const edit=ev.target.closest('[data-edit]'),transfer=ev.target.closest('[data-transfer]');if(edit){const r=employeeRecords.find(e=>e.id===edit.dataset.edit);if(r)openEmployeeForm(r);}if(transfer){const r=employeeRecords.find(e=>e.id===transfer.dataset.transfer);if(!r)return;empEl('transferForm').reset();empEl('transferEmployeeId').value=r.id;empEl('transferFrom').value=r.department;empEl('transferEmployeeLabel').textContent=`${r.code} · ${r.name}`;empEl('transferDate').value=new Date().toISOString().slice(0,10);empEl('transferPanel').hidden=false;empEl('transferPanel').scrollIntoView({behavior:'smooth',block:'start'});}});
+function closeTransfer(){empEl('transferPanel').hidden=true;}empEl('closeTransfer').addEventListener('click',closeTransfer);empEl('cancelTransfer').addEventListener('click',closeTransfer);
+empEl('transferForm').addEventListener('submit',ev=>{ev.preventDefault();const r=employeeRecords.find(e=>e.id===empEl('transferEmployeeId').value);const to=empEl('transferTo').value;if(!r)return;if(!to||to===r.department){toast('Select a different target department.');return;}transferRecords.push({id:'tr_'+Date.now(),employeeId:r.id,code:r.code,name:r.name,from:r.department,to,date:empEl('transferDate').value,reason:empEl('transferReason').value.trim(),remarks:empEl('transferRemarks').value.trim()});r.department=to;savePreviewData();renderEmployees();closeTransfer();toast('Transfer saved in browser preview only.');});
+['employeeSearch','employeeDeptFilter','employeeStatusFilter'].forEach(id=>empEl(id).addEventListener(id==='employeeSearch'?'input':'change',renderEmployees));
+empEl('employeeExport').addEventListener('click',()=>{const cols=['Employee ID','Employee Name','Department','Designation','Mobile','Status'];const rows=employeeRecords.map(e=>[e.code,e.name,e.department,e.designation,e.mobile,e.status]);const csv=[cols,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download='employee-master-preview.csv';a.click();URL.revokeObjectURL(a.href);});
+renderEmployees();
+
 </script>
 </body>
 </html>
