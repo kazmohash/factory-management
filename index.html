@@ -129,6 +129,19 @@ tbody tr:last-child td{border-bottom:0}
 .quick strong{display:block;font-size:11px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
 .footer-note{margin-top:23px;display:flex;justify-content:space-between;gap:12px;color:#91a0b5;font-size:10px}
 .toast{position:fixed;right:24px;bottom:24px;background:#102746;color:white;border-radius:10px;padding:13px 16px;box-shadow:0 10px 35px #10274635;z-index:99;max-width:330px;display:none}
+
+/* Query 89: Admin profile dropdown and explicit logout control */
+.profile-wrap{position:relative}
+.profile-menu{position:absolute;right:0;top:calc(100% + 10px);width:260px;padding:15px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 36px rgba(16,39,70,.18);z-index:100;color:var(--text)}
+.profile-menu[hidden]{display:none!important}
+.profile-menu-heading{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.7px}
+.profile-menu-email{font-size:12px;font-weight:750;overflow-wrap:anywhere;margin-top:6px}
+.profile-menu-role{display:flex;align-items:center;gap:7px;font-size:11px;color:#526680;margin-top:10px}
+.profile-role-dot{width:7px;height:7px;background:var(--green);border-radius:50%}
+.profile-menu-divider{height:1px;background:var(--line);margin:13px 0}
+.profile-logout{width:100%;border:0;background:#fff4f4;color:#c33950;padding:10px 11px;border-radius:8px;text-align:left;font-weight:750;font-size:12px}
+.profile-logout:hover{background:#ffe5e8}
+
 .mobile-overlay{display:none}
 body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.collapsed .brand-copy,body.collapsed .nav-label,body.collapsed .nav-text,body.collapsed .count,body.collapsed .sidebar-foot{display:none}body.collapsed .nav{padding:0 10px}body.collapsed .nav button{justify-content:center;padding:12px 5px}body.collapsed .nav .ico{font-size:19px}body.collapsed .main{margin-left:76px;width:calc(100% - 76px)}
 @media(max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-two,.bottom-grid{grid-template-columns:1fr}.content{padding:22px}.quick-actions{grid-template-columns:repeat(2,minmax(0,1fr))}}
@@ -280,9 +293,18 @@ body.auth-checking .auth-session-loader{display:flex}
       <div class="top-actions">
         <div class="global-search"><span>⌕</span><input id="globalSearch" placeholder="Search anything..." aria-label="Search anything"></div>
         <button class="icon-btn notification" id="notificationsBtn" title="Notifications">♧<i class="dot"></i></button>
-        <div class="avatar">A</div>
-        <div class="user-meta"><strong>Ashraf</strong><small>Administrator · Demo</small></div>
-        <button class="icon-btn" id="profileBtn" title="Profile menu">⌄</button>
+        <div class="avatar" id="adminAvatar">A</div>
+        <div class="user-meta"><strong id="adminDisplayName">Ashraf</strong><small id="adminRoleLabel">Administrator</small></div>
+        <div class="profile-wrap">
+          <button class="icon-btn" id="profileBtn" title="Profile menu" aria-haspopup="true" aria-expanded="false">⌄</button>
+          <div class="profile-menu" id="profileMenu" hidden>
+            <div class="profile-menu-heading">Signed in as</div>
+            <div class="profile-menu-email" id="profileEmail">Admin account</div>
+            <div class="profile-menu-role"><span class="profile-role-dot"></span> Active Administrator</div>
+            <div class="profile-menu-divider"></div>
+            <button type="button" class="profile-logout" id="logoutBtn">↪ &nbsp; Log out</button>
+          </div>
+        </div>
       </div>
     </header>
     <section class="content">
@@ -554,7 +576,40 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
 });
 document.getElementById('addBtn').addEventListener('click',()=>toast('Quick Entry form will be connected to the database in the next phase.'));
 document.getElementById('notificationsBtn').addEventListener('click',()=>toast('Notifications: 3 demo alerts — one CAP overdue, one inspection review, one stock warning.'));
-document.getElementById('profileBtn').addEventListener('click',async()=>{if(window.factorySupabase){const {error}=await window.factorySupabase.auth.signOut();if(error)toast('Logout failed: '+error.message);else{document.body.classList.add('auth-locked');toast('You have been logged out.');}}});
+// Query 89: Profile opens its menu; only the explicit Log out button signs out.
+const profileBtn=document.getElementById('profileBtn');
+const profileMenu=document.getElementById('profileMenu');
+function closeProfileMenu(){profileMenu.hidden=true;profileBtn.setAttribute('aria-expanded','false');}
+profileBtn.addEventListener('click',ev=>{
+  ev.stopPropagation();
+  profileMenu.hidden=!profileMenu.hidden;
+  profileBtn.setAttribute('aria-expanded',String(!profileMenu.hidden));
+});
+profileMenu.addEventListener('click',ev=>ev.stopPropagation());
+document.addEventListener('click',closeProfileMenu);
+document.addEventListener('keydown',ev=>{if(ev.key==='Escape')closeProfileMenu();});
+function updateAdminHeader(user){
+  const email=user?.email||'Admin account';
+  const metadataName=user?.user_metadata?.full_name||user?.user_metadata?.name||'';
+  const displayName=metadataName.trim()||'Ashraf';
+  document.getElementById('adminDisplayName').textContent=displayName;
+  document.getElementById('adminAvatar').textContent=(displayName.charAt(0)||'A').toUpperCase();
+  document.getElementById('adminRoleLabel').textContent='Administrator';
+  document.getElementById('profileEmail').textContent=email;
+}
+document.getElementById('logoutBtn').addEventListener('click',async()=>{
+  closeProfileMenu();
+  if(!window.factorySupabase){toast('Supabase connection is unavailable.');return;}
+  const logoutBtn=document.getElementById('logoutBtn');
+  logoutBtn.disabled=true;
+  try{
+    const {error}=await window.factorySupabase.auth.signOut();
+    if(error)throw error;
+    showLogin();
+    toast('You have been logged out.');
+  }catch(error){toast('Logout failed: '+(error.message||'Please try again.'));}
+  finally{logoutBtn.disabled=false;}
+});
 ['inspectionDetails','viewAllBtn','supplierDetails','nextPage'].forEach(id=>document.getElementById(id).addEventListener('click',()=>toast('This action is a UI placeholder; live records and pagination will be added with the database.')));
 document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){search.value=e.target.value;filterRows();document.getElementById('tableSearch').focus();toast('Activity table searched for: '+e.target.value)}});
 
@@ -619,6 +674,7 @@ async function initializeAdminSession(){
     if(error) throw new Error('Session check failed. '+error.message);
     if(data.session){
       await verifyActiveAdmin(data.session.user);
+      updateAdminHeader(data.session.user);
       showWorkspace();
     }else{
       showLogin();
@@ -645,6 +701,7 @@ loginForm.addEventListener('submit',async ev=>{
     const {data,error}=await window.factorySupabase.auth.signInWithPassword({email,password});
     if(error) throw new Error(error.message);
     await verifyActiveAdmin(data.user);
+    updateAdminHeader(data.user);
     showWorkspace();toast('Admin login successful. Welcome to Factory Management System.');
   }catch(error){
     await window.factorySupabase.auth.signOut();
