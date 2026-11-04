@@ -215,6 +215,7 @@ body.auth-checking .auth-session-loader{display:flex}
 .login-clear-row{display:flex;justify-content:flex-end;margin:-12px 0 20px}
 .login-clear-link{border:0;background:transparent;color:#64748b;font-size:12px;font-weight:650;text-decoration:underline;cursor:pointer;padding:4px}
 .login-clear-link:hover{color:#078c2c}
+.clear-login-backdrop[hidden]{display:none!important}
 .clear-login-backdrop{position:fixed;inset:0;z-index:9999;background:rgba(10,28,52,.55);display:grid;place-items:center;padding:20px}
 .clear-login-dialog{width:min(100%,480px);background:#fff;border-radius:18px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.25);color:#19314f}
 .clear-login-dialog h3{margin:0 0 10px;font-size:20px}
@@ -744,10 +745,20 @@ document.getElementById('clearSavedLoginBtn').addEventListener('click',async()=>
     const {error}=await window.factorySupabase.auth.signOut();
     if(error){showLoginError('Could not clear the app session: '+error.message);return;}
   }
-  document.getElementById('clearLoginHelp').hidden=false;
+  clearLoginHelp.style.display='grid';
+  clearLoginHelp.hidden=false;
 });
+const clearLoginHelp=document.getElementById('clearLoginHelp');
+clearLoginHelp.hidden=true;
 document.getElementById('closeClearLoginHelp').addEventListener('click',()=>{
-  document.getElementById('clearLoginHelp').hidden=true;
+  clearLoginHelp.hidden=true;
+  clearLoginHelp.style.display='none';
+});
+clearLoginHelp.addEventListener('click',ev=>{
+  if(ev.target===clearLoginHelp){
+    clearLoginHelp.hidden=true;
+    clearLoginHelp.style.display='none';
+  }
 });
 document.getElementById('clearLoginHelp').addEventListener('click',ev=>{
   if(ev.target.id==='clearLoginHelp') ev.currentTarget.hidden=true;
