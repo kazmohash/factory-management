@@ -389,7 +389,26 @@ body.collapsed .sidebar{width:76px}body.collapsed .brand{padding:22px 19px}body.
   </main>
 </div>
 <div class="toast" id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// Query 83: Supabase Client Foundation
+// Save Name: index_Query83.html
+// Public browser configuration only. Never place a secret/service_role key here.
+const SUPABASE_URL = 'https://ovhrmgwryrcheuiadyrg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_XPTRtP-uO-oG9q3HzxQGgQ_qclFp4Fx';
+
+if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+  console.error('Query 83: Supabase JS SDK failed to load.');
+  window.factorySupabaseReady = false;
+} else {
+  window.factorySupabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
+  );
+  window.factorySupabaseReady = true;
+  console.info('Query 83: Supabase client initialized. Database operations remain disabled until authenticated access is implemented.');
+}
 const toastEl=document.getElementById('toast');
 let toastTimer;
 function toast(message){toastEl.textContent=message;toastEl.style.display='block';clearTimeout(toastTimer);toastTimer=setTimeout(()=>toastEl.style.display='none',3200)}
