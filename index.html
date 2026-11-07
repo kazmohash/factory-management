@@ -147,6 +147,7 @@ tbody tr:last-child td{border-bottom:0}
 .employee-confirm-actions .btn.danger{background:#d9485f;border-color:#d9485f;color:#fff}
 .employee-confirm-actions .btn.danger:hover{background:#bd344b}
 .employee-confirm-actions .btn:disabled{opacity:.6;cursor:wait}
+.employee-confirm-actions button[hidden]{display:none!important}
 @media(max-width:480px){.employee-confirm-top{padding:19px 17px 13px}.employee-confirm-record,.employee-confirm-warning{margin-left:17px;margin-right:17px}.employee-confirm-actions{padding:13px 17px 17px}}
 
 .toast{position:fixed;right:24px;bottom:24px;background:#102746;color:white;border-radius:10px;padding:13px 16px;box-shadow:0 10px 35px #10274635;z-index:99;max-width:330px;display:none}
@@ -837,7 +838,9 @@ function showEmployeeDeleteModal(record,hasTransferHistory){
   empEl('employeeDeleteWarning').textContent=hasTransferHistory
    ?'Recommended action: open Edit Employee, change Status to Inactive, and save. The employee and transfer history will remain available for audit purposes.'
    :'This action cannot be undone. The employee record will be removed from the Employee Master.';
-  empEl('confirmEmployeeDelete').hidden=hasTransferHistory;
+  const deleteConfirmButton=empEl('confirmEmployeeDelete');
+  deleteConfirmButton.hidden=hasTransferHistory;
+  deleteConfirmButton.style.display=hasTransferHistory?'none':'';
   empEl('cancelEmployeeDelete').textContent=hasTransferHistory?'Close':'Cancel';
   employeeDeleteModal.hidden=false;
   employeeDeleteModal.setAttribute('aria-hidden','false');
