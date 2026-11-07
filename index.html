@@ -128,6 +128,27 @@ tbody tr:last-child td{border-bottom:0}
 .quick .qicon{width:35px;height:35px;border-radius:10px;background:#edf4ff;color:var(--blue);display:grid;place-items:center;font-size:16px;flex-shrink:0}
 .quick strong{display:block;font-size:11px}.quick small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
 .footer-note{margin-top:23px;display:flex;justify-content:space-between;gap:12px;color:#91a0b5;font-size:10px}
+
+/* Query 101: Branded Employee Delete Confirmation Modal */
+.employee-confirm-backdrop{position:fixed;inset:0;z-index:1500;display:grid;place-items:center;padding:20px;background:rgba(9,24,45,.58);backdrop-filter:blur(3px)}
+.employee-confirm-backdrop[hidden]{display:none!important}
+.employee-confirm-dialog{width:min(100%,460px);background:#fff;border:1px solid #e7edf5;border-radius:16px;box-shadow:0 24px 70px rgba(8,25,48,.28);overflow:hidden;animation:employeeModalIn .18s ease-out}
+@keyframes employeeModalIn{from{opacity:0;transform:translateY(8px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+.employee-confirm-top{display:flex;align-items:flex-start;gap:13px;padding:23px 23px 15px}
+.employee-confirm-icon{width:43px;height:43px;flex:0 0 43px;border-radius:13px;background:var(--red-soft);color:var(--red);display:grid;place-items:center;font-size:21px;font-weight:800}
+.employee-confirm-title{margin:1px 0 6px;color:#102746;font-size:17px;font-weight:800;letter-spacing:-.25px}
+.employee-confirm-description{margin:0;color:#667892;font-size:12px;line-height:1.65}
+.employee-confirm-record{margin:0 23px 17px;padding:12px 14px;border:1px solid #e8edf5;background:#f8fafd;border-radius:10px}
+.employee-confirm-record small{display:block;color:#8291a7;font-size:10px;font-weight:750;text-transform:uppercase;letter-spacing:.65px}
+.employee-confirm-record strong{display:block;color:#183252;font-size:13px;margin-top:5px}
+.employee-confirm-warning{margin:0 23px 18px;padding:10px 12px;border-radius:9px;background:#fff7e8;color:#98620a;font-size:11px;line-height:1.55}
+.employee-confirm-actions{display:flex;justify-content:flex-end;gap:9px;padding:15px 23px 20px;border-top:1px solid #edf1f6}
+.employee-confirm-actions .btn{min-width:94px;justify-content:center}
+.employee-confirm-actions .btn.danger{background:#d9485f;border-color:#d9485f;color:#fff}
+.employee-confirm-actions .btn.danger:hover{background:#bd344b}
+.employee-confirm-actions .btn:disabled{opacity:.6;cursor:wait}
+@media(max-width:480px){.employee-confirm-top{padding:19px 17px 13px}.employee-confirm-record,.employee-confirm-warning{margin-left:17px;margin-right:17px}.employee-confirm-actions{padding:13px 17px 17px}}
+
 .toast{position:fixed;right:24px;bottom:24px;background:#102746;color:white;border-radius:10px;padding:13px 16px;box-shadow:0 10px 35px #10274635;z-index:99;max-width:330px;display:none}
 
 /* Query 89: Admin profile dropdown and explicit logout control */
@@ -500,6 +521,28 @@ body.auth-checking .auth-session-loader{display:flex}
     </section>
   </main>
 </div>
+
+<div class="employee-confirm-backdrop" id="employeeDeleteModal" hidden aria-hidden="true">
+  <section class="employee-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="employeeDeleteTitle" aria-describedby="employeeDeleteDescription">
+    <div class="employee-confirm-top">
+      <div class="employee-confirm-icon" aria-hidden="true">!</div>
+      <div>
+        <h2 class="employee-confirm-title" id="employeeDeleteTitle">Delete employee record?</h2>
+        <p class="employee-confirm-description" id="employeeDeleteDescription">Please review the employee details before continuing.</p>
+      </div>
+    </div>
+    <div class="employee-confirm-record">
+      <small>Employee</small>
+      <strong id="employeeDeleteRecord">—</strong>
+    </div>
+    <p class="employee-confirm-warning" id="employeeDeleteWarning">This action permanently removes the employee record and cannot be undone.</p>
+    <div class="employee-confirm-actions">
+      <button type="button" class="btn" id="cancelEmployeeDelete">Cancel</button>
+      <button type="button" class="btn danger" id="confirmEmployeeDelete">Delete Employee</button>
+    </div>
+  </section>
+</div>
+
 <div class="toast" id="toast" role="status"></div>
 <div class="clear-login-backdrop" id="clearLoginHelp" hidden>
   <section class="clear-login-dialog" role="dialog" aria-modal="true" aria-labelledby="clearLoginTitle">
@@ -752,13 +795,69 @@ empEl('employeeRows').addEventListener('click',async ev=>{
  }
  if(del){
   const r=employeeRecords.find(e=>String(e.id)===del.dataset.delete);if(!r)return;
-  if(!confirm(`Delete employee ${r.code} — ${r.name}? This cannot be undone.`))return;
+  const hasTransferHistory=transferRecords.some(t=>String(t.employeeId)===String(r.id));
+  const confirmed=await showEmployeeDeleteModal(r,hasTransferHistory);
+  if(!confirmed)return;
   del.disabled=true;
-  try{const {error}=await window.factorySupabase.from('employees').delete().eq('id',r.id);if(error)throw error;await loadEmployeeData();toast('Employee deleted successfully.');}
-  catch(error){console.error('Query 96: Employee delete failed.',error);toast(error.message?.includes('employee_department_transfers')?'This employee has transfer history and cannot be deleted. Keep the record and set Status to Inactive instead.':(error.message||'Employee could not be deleted.'));}
-  finally{del.disabled=false;}
+  try{
+   const {error}=await window.factorySupabase.from('employees').delete().eq('id',r.id);
+   if(error)throw error;
+   await loadEmployeeData();
+   toast('Employee record deleted successfully.');
+  }catch(error){
+   console.error('Query 101: Employee delete failed.',error);
+   toast(error.message?.includes('employee_department_transfers')?'This employee has transfer history. Set the employee status to Inactive instead.':(error.message||'Employee could not be deleted.'));
+  }finally{del.disabled=false;}
  }
 });
+
+// Query 101: Accessible custom confirmation; records with transfer history are protected.
+const employeeDeleteModal=empEl('employeeDeleteModal');
+let employeeDeleteResolver=null;
+let employeeDeleteBusy=false;
+function closeEmployeeDeleteModal(result=false){
+ if(!employeeDeleteModal)return;
+ employeeDeleteModal.hidden=true;
+ employeeDeleteModal.setAttribute('aria-hidden','true');
+ document.removeEventListener('keydown',employeeDeleteKeyHandler);
+ const resolve=employeeDeleteResolver;employeeDeleteResolver=null;
+ if(resolve)resolve(result);
+}
+function employeeDeleteKeyHandler(ev){
+ if(ev.key==='Escape'&&!employeeDeleteBusy)closeEmployeeDeleteModal(false);
+}
+function showEmployeeDeleteModal(record,hasTransferHistory){
+ return new Promise(resolve=>{
+  employeeDeleteResolver=resolve;employeeDeleteBusy=false;
+  empEl('employeeDeleteTitle').textContent=hasTransferHistory?'Employee record cannot be deleted':'Delete employee record?';
+  empEl('employeeDeleteDescription').textContent=hasTransferHistory
+   ?'This employee has department transfer history linked to the record. To preserve the audit trail, the employee cannot be permanently deleted.'
+   :'You are about to permanently remove this employee record. Please confirm that you want to continue.';
+  empEl('employeeDeleteRecord').textContent=`${record.code} — ${record.name}`;
+  empEl('employeeDeleteWarning').textContent=hasTransferHistory
+   ?'Recommended action: open Edit Employee, change Status to Inactive, and save. The employee and transfer history will remain available for audit purposes.'
+   :'This action cannot be undone. The employee record will be removed from the Employee Master.';
+  empEl('confirmEmployeeDelete').hidden=hasTransferHistory;
+  empEl('cancelEmployeeDelete').textContent=hasTransferHistory?'Close':'Cancel';
+  employeeDeleteModal.hidden=false;
+  employeeDeleteModal.setAttribute('aria-hidden','false');
+  document.addEventListener('keydown',employeeDeleteKeyHandler);
+  empEl('cancelEmployeeDelete').focus();
+ });
+}
+empEl('cancelEmployeeDelete').addEventListener('click',()=>closeEmployeeDeleteModal(false));
+empEl('confirmEmployeeDelete').addEventListener('click',()=>{
+ if(employeeDeleteBusy)return;
+ employeeDeleteBusy=true;
+ const button=empEl('confirmEmployeeDelete');
+ button.disabled=true;button.textContent='Deleting…';
+ closeEmployeeDeleteModal(true);
+ button.disabled=false;button.textContent='Delete Employee';
+});
+employeeDeleteModal.addEventListener('click',ev=>{
+ if(ev.target===employeeDeleteModal&&!employeeDeleteBusy)closeEmployeeDeleteModal(false);
+});
+
 function closeTransfer(){empEl('transferPanel').hidden=true;}
 empEl('closeTransfer').addEventListener('click',closeTransfer);
 empEl('cancelTransfer').addEventListener('click',closeTransfer);
