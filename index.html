@@ -490,21 +490,16 @@ body.auth-checking .auth-session-loader{display:flex}
             <label>Employee ID <b>*</b><input class="field" id="employeeCode" required placeholder="e.g. 34000120 / EMP00120 / SF-3400120"></label>
             <label>Employee Name <b>*</b><input class="field" id="employeeName" required maxlength="120" placeholder="Enter full name"></label>
             <label>Department <b>*</b><select class="field" id="employeeDepartment" required disabled><option value="">Loading departments...</option></select></label>
-            <label>Employee Category <b>*</b><select class="field" id="employeeCategory" required><option value="QA">QA</option><option value="Management">Management</option></select></label>
             <label>Designation<input class="field" id="employeeDesignation" maxlength="100" placeholder="Enter designation"></label>
             <label>Mobile Number<input class="field" id="employeeMobile" maxlength="30" placeholder="01XXXXXXXXX"></label>
-            <label>Date of Joining<input class="field" id="employeeJoiningDate" type="date"></label>
-            <label>Date of Birth<input class="field" id="employeeBirthDate" type="date"></label>
-            <label>Blood Group<select class="field" id="employeeBloodGroup"><option value="">Not specified</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></label>
-            <label>Last Promotion Year<input class="field" id="employeePromotionYear" type="number" min="1900" max="2100" step="1" placeholder="e.g. 2024"></label>
-            <label>Status<select class="field" id="employeeStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Resigned">Resigned</option><option value="Terminated">Terminated</option></select></label>
+            <label>Status<select class="field" id="employeeStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></label>
             <div class="employee-form-actions"><button type="button" class="btn" id="cancelEmployee">Cancel</button><button type="submit" class="btn primary" id="saveEmployee">Save Employee</button></div>
           </form>
         </section>
         <section class="panel table-panel employee-directory">
           <div class="panel-head"><div><div class="panel-title">Employee Directory</div><div class="panel-sub">Search and manage employee records</div></div><span class="status info" id="employeeCount">0 records</span></div>
-          <div class="table-toolbar"><div class="filters employee-filters"><input class="field search-field" id="employeeSearch" placeholder="Search ID, name or designation..."><select class="field" id="employeeDeptFilter" disabled><option value="">All departments · Loading...</option></select><select class="field" id="employeeCategoryFilter"><option value="">All categories</option><option value="QA">QA</option><option value="Management">Management</option></select><select class="field" id="employeeStatusFilter"><option value="">All status</option><option>Active</option><option>Inactive</option><option>Resigned</option><option>Terminated</option></select></div></div>
-          <div class="table-scroll"><table id="employeeTable"><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Category</th><th>Department</th><th>Designation</th><th>Section / Area</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead><tbody id="employeeRows"><tr><td colspan="9" class="employee-empty">No employee records yet. Click “Add Employee” to create the first record.</td></tr></tbody></table></div>
+          <div class="table-toolbar"><div class="filters employee-filters"><input class="field search-field" id="employeeSearch" placeholder="Search ID, name or designation..."><select class="field" id="employeeDeptFilter" disabled><option value="">All departments · Loading...</option></select><select class="field" id="employeeStatusFilter"><option value="">All status</option><option>Active</option><option>Inactive</option></select></div></div>
+          <div class="table-scroll"><table id="employeeTable"><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Department</th><th>Designation</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead><tbody id="employeeRows"><tr><td colspan="7" class="employee-empty">No employee records yet. Click “Add Employee” to create the first record.</td></tr></tbody></table></div>
           <div class="table-foot"><span id="employeeRowsCount">Showing 0 employees</span><span>Live employee records from Supabase</span></div>
         </section>
         <section class="panel transfer-panel" id="transferPanel" hidden>
@@ -522,7 +517,7 @@ body.auth-checking .auth-session-loader{display:flex}
           <div class="panel-head"><div><div class="panel-title">Recent Department Transfers</div><div class="panel-sub">Employee department movement log</div></div></div>
           <div class="table-scroll"><table><thead><tr><th>Employee ID</th><th>Employee Name</th><th>From Department</th><th>To Department</th><th>Transfer Date</th><th>Reason</th></tr></thead><tbody id="transferRows"><tr><td colspan="6" class="employee-empty">No transfer history available.</td></tr></tbody></table></div>
         </section>
-        <div class="footer-note"><span>Factory Management System · Employee Master</span><span>Live Employee Master and assignment data from Supabase.</span></div>
+        <div class="footer-note"><span>Factory Management System · Employee Master</span><span>Preview data is stored in this browser only. Supabase integration is not active.</span></div>
       </section>
     </section>
   </main>
@@ -687,18 +682,13 @@ document.getElementById('logoutBtn').addEventListener('click',async()=>{
 ['inspectionDetails','viewAllBtn','supplierDetails','nextPage'].forEach(id=>document.getElementById(id).addEventListener('click',()=>toast('This action is a UI placeholder; live records and pagination will be added with the database.')));
 document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){search.value=e.target.value;filterRows();document.getElementById('tableSearch').focus();toast('Activity table searched for: '+e.target.value)}});
 
-// Query No: 252
-// Save Name: index_Query252_Employee_Master_Complete_CRUD.html
-// Query 96 baseline updated for category, full status, employee details and assignment display.
+// Query 96: Employee Master Supabase CRUD + Department Transfer integration
 // Save Name: index_Query96_Employee_Master_Supabase_CRUD.html
 // Employee ID remains flexible TEXT (no numeric-only or fixed-length validation).
 const empEl=id=>document.getElementById(id);
 let employeeDepartments=[];
 let employeeRecords=[];
 let transferRecords=[];
-let employeeSectionMap=new Map();
-let employeeBlockMap=new Map();
-let employeeBuyerMap=new Map();
 let employeeDepartmentsLoaded=false;
 let employeeDataLoading=false;
 let employeeSaveBusy=false;
@@ -713,8 +703,7 @@ function fillDepartmentSelect(selectId,placeholder){
  employeeDepartments.forEach(d=>{const option=document.createElement('option');option.value=String(d.id);option.textContent=`${d.department_code} · ${d.department_name}`;select.appendChild(option);});
  select.disabled=false;if(previous&&[...select.options].some(o=>o.value===previous))select.value=previous;
 }
-function employeeDbToUi(row){return {id:Number(row.id),code:row.employee_code,name:row.employee_name,departmentId:row.department_id==null?null:Number(row.department_id),category:row.employee_category||'',designation:row.designation||'',mobile:row.mobile_number||'',joiningDate:row.date_of_joining||'',birthDate:row.date_of_birth||'',bloodGroup:row.blood_group||'',promotionYear:row.last_promotion_year??'',status:row.employee_status|| (row.is_active?'Active':'Inactive')};}
-function employeeAssignmentLabel(e){const parts=[];if(employeeSectionMap.has(String(e.id)))parts.push(employeeSectionMap.get(String(e.id)));if(employeeBlockMap.has(String(e.id)))parts.push(employeeBlockMap.get(String(e.id)));if(employeeBuyerMap.has(String(e.id)))parts.push(employeeBuyerMap.get(String(e.id)));return parts.join(' · ')||'—';}
+function employeeDbToUi(row){return {id:Number(row.id),code:row.employee_code,name:row.employee_name,departmentId:Number(row.department_id),designation:row.designation||'',mobile:row.mobile_number||'',status:row.is_active?'Active':'Inactive'};}
 async function loadEmployeeDepartments(force=false){
  if(employeeDepartmentsLoaded&&!force)return;
  const {data,error}=await window.factorySupabase.from('departments').select('id,department_code,department_name,is_active').eq('is_active',true).order('id',{ascending:true});
@@ -731,42 +720,30 @@ async function loadEmployeeData(){
  if(employeeDataLoading)return;
  if(!window.factorySupabaseReady||!window.factorySupabase){toast('Supabase connection is not ready.');return;}
  employeeDataLoading=true;
- empEl('employeeRows').innerHTML='<tr><td colspan="9" class="employee-empty">Loading employee records from Supabase…</td></tr>';
+ empEl('employeeRows').innerHTML='<tr><td colspan="7" class="employee-empty">Loading employee records from Supabase…</td></tr>';
  try{
   await loadEmployeeDepartments();
-  const [employeesResult,transfersResult,sectionAssignResult,sectionMasterResult,blockAssignResult,blockMasterResult,buyerAssignResult,buyerMasterResult]=await Promise.all([
-   window.factorySupabase.from('employees').select('id,employee_code,employee_name,department_id,designation,mobile_number,is_active,employee_status,employee_category,date_of_joining,date_of_birth,blood_group,last_promotion_year,created_at').order('employee_name',{ascending:true}),
-   window.factorySupabase.from('employee_department_transfers').select('id,employee_id,from_department_id,to_department_id,transfer_date,transfer_reason,remarks,created_at').order('created_at',{ascending:false}).limit(50),
-   window.factorySupabase.from('employee_assignments').select('employee_id,section_id,sub_section_id'),
-   window.factorySupabase.from('qa_sections').select('id,section_name'),
-   window.factorySupabase.from('employee_sewing_block_assignments').select('employee_id,sewing_block_id'),
-   window.factorySupabase.from('sewing_blocks').select('id,block_name'),
-   window.factorySupabase.from('employee_gpq_buyer_assignments').select('employee_id,buyer_area_id'),
-   window.factorySupabase.from('gpq_buyer_areas').select('id,buyer_area_name')
+  const [employeesResult,transfersResult]=await Promise.all([
+   window.factorySupabase.from('employees').select('id,employee_code,employee_name,department_id,designation,mobile_number,is_active,created_at').order('employee_name',{ascending:true}),
+   window.factorySupabase.from('employee_department_transfers').select('id,employee_id,from_department_id,to_department_id,transfer_date,transfer_reason,remarks,created_at').order('created_at',{ascending:false}).limit(50)
   ]);
-  for(const r of [employeesResult,transfersResult,sectionAssignResult,sectionMasterResult,blockAssignResult,blockMasterResult,buyerAssignResult,buyerMasterResult])if(r.error)throw r.error;
+  if(employeesResult.error)throw employeesResult.error;
+  if(transfersResult.error)throw new Error('Employee records loaded, but transfer history could not be read. '+transfersResult.error.message);
   employeeRecords=(employeesResult.data||[]).map(employeeDbToUi);
-  const sectionNames=new Map((sectionMasterResult.data||[]).map(x=>[String(x.id),x.section_name]));
-  const blockNames=new Map((blockMasterResult.data||[]).map(x=>[String(x.id),x.block_name]));
-  const buyerNames=new Map((buyerMasterResult.data||[]).map(x=>[String(x.id),x.buyer_area_name]));
-  employeeSectionMap=new Map((sectionAssignResult.data||[]).map(x=>[String(x.employee_id),[sectionNames.get(String(x.section_id)),x.sub_section_id?`Relaxation`:null].filter(Boolean).join(' / ')]));
-  employeeBlockMap=new Map((blockAssignResult.data||[]).map(x=>[String(x.employee_id),blockNames.get(String(x.sewing_block_id))||'']));
-  employeeBuyerMap=new Map((buyerAssignResult.data||[]).map(x=>[String(x.employee_id),buyerNames.get(String(x.buyer_area_id))||'']));
   const byEmployee=new Map(employeeRecords.map(e=>[String(e.id),e]));
   transferRecords=(transfersResult.data||[]).map(t=>{const e=byEmployee.get(String(t.employee_id));return {id:t.id,employeeId:t.employee_id,code:e?.code||'—',name:e?.name||'Employee record',from:departmentLabel(t.from_department_id),to:departmentLabel(t.to_department_id),date:t.transfer_date,reason:t.transfer_reason||'',remarks:t.remarks||''};});
   renderEmployees();
+  empEl('employeeRowsCount').textContent=`Showing ${employeeRecords.length} of ${employeeRecords.length} employees`;
  }catch(error){
-  console.error('Query 252: Employee Master load failed.',error);
-  empEl('employeeRows').innerHTML=`<tr><td colspan="9" class="employee-empty">${esc(error.message||'Could not load Employee Master data.')}</td></tr>`;
+  console.error('Query 96: Employee Master load failed.',error);
+  empEl('employeeRows').innerHTML=`<tr><td colspan="7" class="employee-empty">${esc(error.message||'Could not load Employee Master data.')}</td></tr>`;
   toast('Employee Master load failed: '+(error.message||'Unknown error'));
  }finally{employeeDataLoading=false;}
 }
 function renderEmployees(){
- const q=empEl('employeeSearch').value.trim().toLowerCase(),dept=empEl('employeeDeptFilter').value,status=empEl('employeeStatusFilter').value,category=empEl('employeeCategoryFilter').value;
- // Query 254: Sort Employee ID in natural ascending order (smallest to largest).
- const list=employeeRecords.filter(e=>(!q||[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile,e.category,employeeAssignmentLabel(e)].join(' ').toLowerCase().includes(q))&&(!dept||String(e.departmentId)===String(dept))&&(!status||e.status===status)&&(!category||e.category===category))
-  .sort((a,b)=>String(a.code||'').localeCompare(String(b.code||''),undefined,{numeric:true,sensitivity:'base'}));
- empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr><td><strong>${esc(e.code)}</strong></td><td>${esc(e.name)}</td><td><span class="status ${e.category==='Management'?'info':'ok'}">${esc(e.category||'—')}</span></td><td>${esc(departmentLabel(e.departmentId))}</td><td>${esc(e.designation||'—')}</td><td>${esc(employeeAssignmentLabel(e))}</td><td>${esc(e.mobile||'—')}</td><td><span class="status ${e.status==='Active'?'ok':e.status==='Inactive'?'warn':'bad'}">${esc(e.status)}</span></td><td><button class="employee-action" data-edit="${e.id}">Edit</button><button class="employee-action" data-transfer="${e.id}">Transfer</button></td></tr>`).join(''):'<tr><td colspan="9" class="employee-empty">No matching employee records found.</td></tr>';
+ const q=empEl('employeeSearch').value.trim().toLowerCase(),dept=empEl('employeeDeptFilter').value,status=empEl('employeeStatusFilter').value;
+ const list=employeeRecords.filter(e=>(!q||[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile].join(' ').toLowerCase().includes(q))&&(!dept||String(e.departmentId)===String(dept))&&(!status||e.status===status));
+ empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr><td><strong>${esc(e.code)}</strong></td><td>${esc(e.name)}</td><td>${esc(departmentLabel(e.departmentId))}</td><td>${esc(e.designation||'—')}</td><td>${esc(e.mobile||'—')}</td><td><span class="status ${e.status==='Active'?'ok':'bad'}">${esc(e.status)}</span></td><td><button class="employee-action" data-edit="${e.id}">Edit</button><button class="employee-action" data-transfer="${e.id}">Transfer</button><button class="employee-action" data-delete="${e.id}" style="color:#c33950">Delete</button></td></tr>`).join(''):'<tr><td colspan="7" class="employee-empty">No matching employee records found.</td></tr>';
  empEl('employeeCount').textContent=list.length+' records';
  empEl('employeeRowsCount').textContent=`Showing ${list.length} of ${employeeRecords.length} employees`;
  empEl('empTotal').textContent=employeeRecords.length;
@@ -779,9 +756,6 @@ function openEmployeeForm(record){
  empEl('employeeCode').value=record?.code||'';empEl('employeeCode').disabled=!!record;
  empEl('employeeName').value=record?.name||'';empEl('employeeDepartment').value=record?.departmentId||'';
  empEl('employeeDesignation').value=record?.designation||'';empEl('employeeMobile').value=record?.mobile||'';
- empEl('employeeCategory').value=record?.category||'QA';
- empEl('employeeJoiningDate').value=record?.joiningDate||'';empEl('employeeBirthDate').value=record?.birthDate||'';
- empEl('employeeBloodGroup').value=record?.bloodGroup||'';empEl('employeePromotionYear').value=record?.promotionYear||'';
  empEl('employeeStatus').value=record?.status||'Active';
  empEl('employeeFormTitle').textContent=record?'Edit Employee':'New Employee';
  empEl('employeeFormPanel').hidden=false;empEl('employeeFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
@@ -799,11 +773,7 @@ empEl('employeeForm').addEventListener('submit',async ev=>{
  if(!code||!name||!departmentById(departmentId)){toast('Employee ID, Employee Name and a valid Department are required.');return;}
  const duplicate=employeeRecords.some(e=>e.code.toLowerCase()===code.toLowerCase()&&String(e.id)!==String(recordId));
  if(duplicate){toast('This Employee ID already exists.');return;}
- const statusValue=empEl('employeeStatus').value;
- const promotionRaw=empEl('employeePromotionYear').value.trim();
- const promotionYear=promotionRaw===''?null:Number(promotionRaw);
- if(promotionYear!==null&&(!Number.isInteger(promotionYear)||promotionYear<1900||promotionYear>2100)){toast('Enter a valid promotion year between 1900 and 2100.');return;}
- const payload={employee_code:code,employee_name:name,department_id:departmentId,employee_category:empEl('employeeCategory').value,designation:empEl('employeeDesignation').value.trim()||null,mobile_number:empEl('employeeMobile').value.trim()||null,date_of_joining:empEl('employeeJoiningDate').value||null,date_of_birth:empEl('employeeBirthDate').value||null,blood_group:empEl('employeeBloodGroup').value||null,last_promotion_year:promotionYear,employee_status:statusValue,is_active:statusValue==='Active'};
+ const payload={employee_code:code,employee_name:name,department_id:departmentId,designation:empEl('employeeDesignation').value.trim()||null,mobile_number:empEl('employeeMobile').value.trim()||null,is_active:empEl('employeeStatus').value==='Active'};
  employeeSaveBusy=true;const saveBtn=empEl('saveEmployee');saveBtn.disabled=true;saveBtn.textContent='Saving…';
  try{
   let result;
@@ -815,7 +785,7 @@ empEl('employeeForm').addEventListener('submit',async ev=>{
  finally{employeeSaveBusy=false;saveBtn.disabled=false;saveBtn.textContent='Save Employee';}
 });
 empEl('employeeRows').addEventListener('click',async ev=>{
- const edit=ev.target.closest('[data-edit]'),transfer=ev.target.closest('[data-transfer]');
+ const edit=ev.target.closest('[data-edit]'),transfer=ev.target.closest('[data-transfer]'),del=ev.target.closest('[data-delete]');
  if(edit){const r=employeeRecords.find(e=>String(e.id)===edit.dataset.edit);if(r)openEmployeeForm(r);return;}
  if(transfer){
   const r=employeeRecords.find(e=>String(e.id)===transfer.dataset.transfer);if(!r)return;
@@ -824,7 +794,221 @@ empEl('employeeRows').addEventListener('click',async ev=>{
   empEl('transferDate').value=new Date().toISOString().slice(0,10);
   empEl('transferPanel').hidden=false;empEl('transferPanel').scrollIntoView({behavior:'smooth',block:'start'});return;
  }
+ if(del){
+  const r=employeeRecords.find(e=>String(e.id)===del.dataset.delete);if(!r)return;
+  const hasTransferHistory=transferRecords.some(t=>String(t.employeeId)===String(r.id));
+  const confirmed=await showEmployeeDeleteModal(r,hasTransferHistory);
+  if(!confirmed)return;
+  del.disabled=true;
+  try{
+   const {error}=await window.factorySupabase.from('employees').delete().eq('id',r.id);
+   if(error)throw error;
+   await loadEmployeeData();
+   toast('Employee record deleted successfully.');
+  }catch(error){
+   console.error('Query 101: Employee delete failed.',error);
+   toast(error.message?.includes('employee_department_transfers')?'This employee has transfer history. Set the employee status to Inactive instead.':(error.message||'Employee could not be deleted.'));
+  }finally{del.disabled=false;}
+ }
 });
+
+// Query 101: Accessible custom confirmation; records with transfer history are protected.
+const employeeDeleteModal=empEl('employeeDeleteModal');
+let employeeDeleteResolver=null;
+let employeeDeleteBusy=false;
+function closeEmployeeDeleteModal(result=false){
+ if(!employeeDeleteModal)return;
+ employeeDeleteModal.hidden=true;
+ employeeDeleteModal.setAttribute('aria-hidden','true');
+ document.removeEventListener('keydown',employeeDeleteKeyHandler);
+ const resolve=employeeDeleteResolver;employeeDeleteResolver=null;
+ if(resolve)resolve(result);
+}
+function employeeDeleteKeyHandler(ev){
+ if(ev.key==='Escape'&&!employeeDeleteBusy)closeEmployeeDeleteModal(false);
+}
+function showEmployeeDeleteModal(record,hasTransferHistory){
+ return new Promise(resolve=>{
+  employeeDeleteResolver=resolve;employeeDeleteBusy=false;
+  empEl('employeeDeleteTitle').textContent=hasTransferHistory?'Employee record cannot be deleted':'Delete employee record?';
+  empEl('employeeDeleteDescription').textContent=hasTransferHistory
+   ?'This employee has department transfer history linked to the record. To preserve the audit trail, the employee cannot be permanently deleted.'
+   :'You are about to permanently remove this employee record. Please confirm that you want to continue.';
+  empEl('employeeDeleteRecord').textContent=`${record.code} — ${record.name}`;
+  empEl('employeeDeleteWarning').textContent=hasTransferHistory
+   ?'Recommended action: open Edit Employee, change Status to Inactive, and save. The employee and transfer history will remain available for audit purposes.'
+   :'This action cannot be undone. The employee record will be removed from the Employee Master.';
+  const deleteConfirmButton=empEl('confirmEmployeeDelete');
+  deleteConfirmButton.hidden=hasTransferHistory;
+  deleteConfirmButton.style.display=hasTransferHistory?'none':'';
+  empEl('cancelEmployeeDelete').textContent=hasTransferHistory?'Close':'Cancel';
+  employeeDeleteModal.hidden=false;
+  employeeDeleteModal.setAttribute('aria-hidden','false');
+  document.addEventListener('keydown',employeeDeleteKeyHandler);
+  empEl('cancelEmployeeDelete').focus();
+ });
+}
+empEl('cancelEmployeeDelete').addEventListener('click',()=>closeEmployeeDeleteModal(false));
+empEl('confirmEmployeeDelete').addEventListener('click',()=>{
+ if(employeeDeleteBusy)return;
+ employeeDeleteBusy=true;
+ const button=empEl('confirmEmployeeDelete');
+ button.disabled=true;button.textContent='Deleting…';
+ closeEmployeeDeleteModal(true);
+ button.disabled=false;button.textContent='Delete Employee';
+});
+employeeDeleteModal.addEventListener('click',ev=>{
+ if(ev.target===employeeDeleteModal&&!employeeDeleteBusy)closeEmployeeDeleteModal(false);
+});
+
+function closeTransfer(){empEl('transferPanel').hidden=true;}
+empEl('closeTransfer').addEventListener('click',closeTransfer);
+empEl('cancelTransfer').addEventListener('click',closeTransfer);
+empEl('transferForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();const employeeId=Number(empEl('transferEmployeeId').value),toId=Number(empEl('transferTo').value),date=empEl('transferDate').value;
+ const r=employeeRecords.find(e=>e.id===employeeId);
+ if(!r||!toId||toId===r.departmentId||!departmentById(toId)||!date){toast('Select a different department and valid effective date.');return;}
+ const submit=empEl('saveTransfer');submit.disabled=true;submit.textContent='Processing…';
+ try{
+  const {data,error}=await window.factorySupabase.rpc('transfer_employee_department',{p_employee_id:employeeId,p_to_department_id:toId,p_transfer_date:date,p_transfer_reason:empEl('transferReason').value.trim()||null,p_remarks:empEl('transferRemarks').value.trim()||null});
+  if(error)throw error;
+  await loadEmployeeData();closeTransfer();toast('Department transfer completed successfully. Reference: '+data);
+ }catch(error){console.error('Query 96: Department transfer failed.',error);toast(error.message||'Department transfer failed.');}
+ finally{submit.disabled=false;submit.textContent='Save Transfer';}
+});
+['employeeSearch','employeeDeptFilter','employeeStatusFilter'].forEach(id=>empEl(id).addEventListener(id==='employeeSearch'?'input':'change',renderEmployees));
+empEl('employeeExport').addEventListener('click',()=>{
+ const cols=['Employee ID','Employee Name','Department','Designation','Mobile','Status'];
+ const rows=employeeRecords.map(e=>[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile,e.status]);
+ const csv=[cols,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='employee-master.csv';a.click();URL.revokeObjectURL(url);
+});
+renderEmployees();
+
+
+// Query 255: Supabase Admin Authentication Loading Timeout Fix
+// Save Name: index_Query255_Admin_Auth_Loading_Fix.html
+const loginForm=document.getElementById('adminLoginForm');
+const loginEmail=document.getElementById('loginEmail');
+const loginPassword=document.getElementById('loginPassword');
+const loginError=document.getElementById('loginError');
+const loginSubmit=document.getElementById('loginSubmit');
+const rememberLogin=document.getElementById('rememberLogin');
+rememberLogin.checked=localStorage.getItem('factoryManagement.rememberLogin')==='true';
+rememberLogin.addEventListener('change',()=>window.setFactoryRememberLogin(rememberLogin.checked));
+function showLoginError(message){loginError.textContent=message;loginError.style.display='block';}
+function clearLoginError(){loginError.textContent='';loginError.style.display='none';}
+function showLogin(){document.body.classList.add('auth-locked');}
+function showWorkspace(){document.body.classList.remove('auth-locked');}
+// Query 255: Prevent an indefinite Admin session spinner when Supabase requests stall.
+// Timeout is fail-closed: the protected workspace is NEVER shown without Admin verification.
+const ADMIN_AUTH_TIMEOUT_MS = 15000;
+function withAdminAuthTimeout(promise, label){
+  let timeoutId;
+  const timeout = new Promise((_, reject)=>{
+    timeoutId=setTimeout(()=>reject(new Error(label+' timed out after 15 seconds. Check internet/Supabase connectivity and reload.')),ADMIN_AUTH_TIMEOUT_MS);
+  });
+  return Promise.race([promise,timeout]).finally(()=>clearTimeout(timeoutId));
+}
+async function verifyActiveAdmin(user){
+  const {data,error}=await withAdminAuthTimeout(
+    window.factorySupabase.from('user_roles').select('role,is_active').eq('user_id',user.id).eq('role','ADMIN').eq('is_active',true).maybeSingle(),
+    'Admin permission verification'
+  );
+  if(error) throw new Error('Admin permission could not be verified. '+error.message);
+  if(!data) throw new Error('This account does not have an active Admin role. Please contact the system administrator.');
+  return true;
+}
+// Query 255: Restore the saved session with a bounded wait; always release the loading screen.
+async function initializeAdminSession(){
+  if(!window.factorySupabaseReady||!window.factorySupabase){
+    showLogin();
+    showLoginError('Supabase could not initialize. Check your internet connection and reload the page.');
+    document.body.classList.remove('auth-checking');
+    return;
+  }
+  try{
+    const {data,error}=await withAdminAuthTimeout(window.factorySupabase.auth.getSession(),'Supabase session check');
+    if(error) throw new Error('Session check failed. '+error.message);
+    if(data.session){
+      await verifyActiveAdmin(data.session.user);
+      updateAdminHeader(data.session.user);
+      showWorkspace();
+    }else{
+      showLogin();
+    }
+  }catch(error){
+    // Do not wait for signOut: a stalled network request must not keep the spinner visible.
+    window.factorySupabase.auth.signOut().then(({error})=>{
+      if(error) console.warn('Query 255: Session cleanup failed.',error);
+    }).catch(signOutError=>console.warn('Query 255: Session cleanup failed.',signOutError));
+    showLogin();
+    showLoginError(error.message||'Unable to verify Admin session. Please sign in again.');
+  }finally{
+    document.body.classList.remove('auth-checking');
+  }
+}
+initializeAdminSession();
+document.getElementById('toggleLoginPassword').addEventListener('click',()=>{
+  const show=loginPassword.type==='password';loginPassword.type=show?'text':'password';document.getElementById('toggleLoginPassword').setAttribute('aria-label',show?'Hide password':'Show password');document.getElementById('toggleLoginPassword').textContent=show?'◎':'◉';
+});
+loginForm.addEventListener('submit',async ev=>{
+  ev.preventDefault();clearLoginError();
+  const email=loginEmail.value.trim(),password=loginPassword.value;
+  if(!email||!password){showLoginError('Enter your Admin email and password.');return;}
+  if(!window.factorySupabaseReady){showLoginError('Supabase connection is unavailable. Reload and try again.');return;}
+  loginSubmit.disabled=true;loginSubmit.textContent='Signing in…';
+  try{
+    const {data,error}=await window.factorySupabase.auth.signInWithPassword({email,password});
+    if(error) throw new Error(error.message);
+    await verifyActiveAdmin(data.user);
+    updateAdminHeader(data.user);
+    showWorkspace();toast('Admin login successful. Welcome to Factory Management System.');
+  }catch(error){
+    await window.factorySupabase.auth.signOut();
+    showLoginError(error.message==='Invalid login credentials'?'Incorrect email or password. Please try again.':error.message);
+  }finally{loginSubmit.disabled=false;loginSubmit.textContent='⇥  Login';}
+});
+// Query 91: Clear app-side remembered login; Chrome credentials must be removed by the user.
+document.getElementById('clearSavedLoginBtn').addEventListener('click',async()=>{
+  clearLoginError();
+  rememberLogin.checked=false;
+  window.setFactoryRememberLogin(false);
+  localStorage.removeItem('factoryManagement.rememberLogin');
+  loginEmail.value='';
+  loginPassword.value='';
+  if(window.factorySupabaseReady){
+    const {error}=await window.factorySupabase.auth.signOut();
+    if(error){showLoginError('Could not clear the app session: '+error.message);return;}
+  }
+  clearLoginHelp.style.display='grid';
+  clearLoginHelp.hidden=false;
+});
+const clearLoginHelp=document.getElementById('clearLoginHelp');
+clearLoginHelp.hidden=true;
+document.getElementById('closeClearLoginHelp').addEventListener('click',()=>{
+  clearLoginHelp.hidden=true;
+  clearLoginHelp.style.display='none';
+});
+clearLoginHelp.addEventListener('click',ev=>{
+  if(ev.target===clearLoginHelp){
+    clearLoginHelp.hidden=true;
+    clearLoginHelp.style.display='none';
+  }
+});
+document.getElementById('clearLoginHelp').addEventListener('click',ev=>{
+  if(ev.target.id==='clearLoginHelp') ev.currentTarget.hidden=true;
+});
+document.getElementById('forgotPasswordLink').addEventListener('click',async ev=>{
+  ev.preventDefault();clearLoginError();const email=loginEmail.value.trim();
+  if(!email){showLoginError('Enter your Admin email first, then click Forgot password.');loginEmail.focus();return;}
+  const {error}=await window.factorySupabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+  if(error)showLoginError('Password reset request failed: '+error.message);else showLoginError('If this email is registered, a password reset link has been sent. Check your inbox.');
+});
+window.factorySupabase?.auth.onAuthStateChange((event)=>{
+  if(event==='SIGNED_OUT') showLogin();
+});
+
 </script>
 </body>
 </html>
