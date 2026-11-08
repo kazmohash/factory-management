@@ -763,7 +763,9 @@ async function loadEmployeeData(){
 }
 function renderEmployees(){
  const q=empEl('employeeSearch').value.trim().toLowerCase(),dept=empEl('employeeDeptFilter').value,status=empEl('employeeStatusFilter').value,category=empEl('employeeCategoryFilter').value;
- const list=employeeRecords.filter(e=>(!q||[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile,e.category,employeeAssignmentLabel(e)].join(' ').toLowerCase().includes(q))&&(!dept||String(e.departmentId)===String(dept))&&(!status||e.status===status)&&(!category||e.category===category));
+ // Query 254: Sort Employee ID in natural ascending order (smallest to largest).
+ const list=employeeRecords.filter(e=>(!q||[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile,e.category,employeeAssignmentLabel(e)].join(' ').toLowerCase().includes(q))&&(!dept||String(e.departmentId)===String(dept))&&(!status||e.status===status)&&(!category||e.category===category))
+  .sort((a,b)=>String(a.code||'').localeCompare(String(b.code||''),undefined,{numeric:true,sensitivity:'base'}));
  empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr><td><strong>${esc(e.code)}</strong></td><td>${esc(e.name)}</td><td><span class="status ${e.category==='Management'?'info':'ok'}">${esc(e.category||'—')}</span></td><td>${esc(departmentLabel(e.departmentId))}</td><td>${esc(e.designation||'—')}</td><td>${esc(employeeAssignmentLabel(e))}</td><td>${esc(e.mobile||'—')}</td><td><span class="status ${e.status==='Active'?'ok':e.status==='Inactive'?'warn':'bad'}">${esc(e.status)}</span></td><td><button class="employee-action" data-edit="${e.id}">Edit</button><button class="employee-action" data-transfer="${e.id}">Transfer</button></td></tr>`).join(''):'<tr><td colspan="9" class="employee-empty">No matching employee records found.</td></tr>';
  empEl('employeeCount').textContent=list.length+' records';
  empEl('employeeRowsCount').textContent=`Showing ${list.length} of ${employeeRecords.length} employees`;
@@ -822,4 +824,7 @@ empEl('employeeRows').addEventListener('click',async ev=>{
   empEl('transferDate').value=new Date().toISOString().slice(0,10);
   empEl('transferPanel').hidden=false;empEl('transferPanel').scrollIntoView({behavior:'smooth',block:'start'});return;
  }
->
+});
+</script>
+</body>
+</html>
