@@ -260,6 +260,42 @@ body.auth-checking .auth-session-loader{display:flex}
 /* Query 256: Employee directory column selector and per-column filters */
 .employee-directory-toolbar{align-items:flex-start}.employee-column-picker{position:relative;flex:0 0 auto;font-size:11px;color:#315276;z-index:5}.employee-column-picker summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:10px 13px;background:#fff;font-weight:750}.employee-column-picker summary::-webkit-details-marker{display:none}.employee-column-options{position:absolute;right:0;top:42px;width:245px;max-height:320px;overflow:auto;padding:12px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(20,45,80,.16);display:grid;grid-template-columns:1fr;gap:9px}.employee-column-options label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#334b68}.employee-column-options input{accent-color:var(--blue)}#employeeTable thead tr.employee-filter-row th{padding:5px 6px;background:#fff;min-width:105px}#employeeTable .column-filter{width:100%;min-width:85px;height:29px;padding:4px 6px;font-size:10px;border:1px solid var(--line);border-radius:5px;color:#315276;background:#fff}.employee-directory .table-scroll{overflow:auto}.employee-directory-toolbar .employee-filters{flex:1;min-width:220px}
 
+
+/* Query 259: Employee Directory internal scrolling and sticky table headers */
+.employee-directory .table-scroll{
+  max-height:min(58vh,620px);
+  min-height:180px;
+  overflow:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable;
+}
+.employee-directory #employeeTable{
+  border-collapse:separate;
+  border-spacing:0;
+}
+.employee-directory #employeeTable thead th{
+  position:sticky;
+  top:0;
+  z-index:4;
+  height:36px;
+  background:#f6f9fd;
+  box-shadow:0 1px 0 var(--line);
+}
+.employee-directory #employeeTable thead tr.employee-filter-row th{
+  position:sticky;
+  top:36px;
+  z-index:5;
+  height:39px;
+  background:#fff;
+  box-shadow:0 1px 0 var(--line);
+}
+.employee-column-picker{z-index:30}
+.employee-column-picker[open] .employee-column-options{z-index:31}
+@media(max-width:760px){
+  .employee-directory .table-scroll{max-height:55vh}
+  .employee-directory #employeeTable thead tr.employee-filter-row th{top:36px}
+}
+
 </style>
 </head>
 <body class="auth-locked auth-checking">
@@ -872,6 +908,23 @@ empEl('employeeForm').addEventListener('submit',async ev=>{
  finally{employeeSaveBusy=false;saveBtn.disabled=false;saveBtn.textContent='Save Employee';}
 });
 renderEmployeeColumnPicker();
+
+// Query 259: Close the Select Columns menu when the user clicks outside it.
+const employeeColumnPicker=empEl('employeeColumnOptions')?.closest('.employee-column-picker');
+if(employeeColumnPicker){
+ document.addEventListener('pointerdown',ev=>{
+  if(employeeColumnPicker.open&&!employeeColumnPicker.contains(ev.target)){
+   employeeColumnPicker.open=false;
+  }
+ });
+ document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'&&employeeColumnPicker.open){
+   employeeColumnPicker.open=false;
+   employeeColumnPicker.querySelector('summary')?.focus();
+  }
+ });
+}
+
 empEl('employeeColumnOptions').addEventListener('change',ev=>{const cb=ev.target.closest('[data-visible-column]');if(!cb)return;const key=cb.dataset.visibleColumn;if(cb.checked){if(!visibleEmployeeColumns.includes(key))visibleEmployeeColumns.push(key);}else{visibleEmployeeColumns=visibleEmployeeColumns.filter(k=>k!==key);}renderEmployees();});
 empEl('employeeTableHead').addEventListener('input',ev=>{const c=ev.target.closest('[data-column-filter]');if(!c)return;employeeColumnFilters[c.dataset.columnFilter]=c.value;renderEmployees(false);});
 empEl('employeeTableHead').addEventListener('change',ev=>{const c=ev.target.closest('[data-column-filter]');if(!c)return;employeeColumnFilters[c.dataset.columnFilter]=c.value;renderEmployees();});
