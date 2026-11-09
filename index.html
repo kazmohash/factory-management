@@ -256,6 +256,10 @@ body.auth-checking .auth-session-loader{display:flex}
 @media(max-width:1050px){body.auth-locked .login-screen{grid-template-columns:1fr}.login-visual{min-height:36vh;padding:25px 6vw}.login-brand img{width:75px;height:75px}.login-brand-copy h1{font-size:clamp(17px,3.2vw,26px)}.login-visual-foot{display:none}.login-panel-wrap{min-height:64vh;padding:24px}.login-card{max-width:540px}}
 @media(max-width:560px){.login-visual{min-height:220px;padding:20px}.login-brand{gap:12px}.login-brand img{width:58px;height:58px}.login-brand-copy{padding-left:13px}.login-brand-copy h1{font-size:clamp(12px,3.8vw,19px);letter-spacing:-.5px}.login-brand-copy p{font-size:clamp(8px,2.1vw,10px);margin-top:7px}.login-panel-wrap{padding:16px;align-items:flex-start}.login-card{padding:26px 20px 22px;border-radius:20px}.login-logo-box{width:72px;height:72px}.login-logo-box img{width:56px;height:56px}.login-card h2{font-size:22px}.login-card .login-subtitle{font-size:13px;margin-bottom:22px}.login-field{height:52px;font-size:14px}.login-input-icon{top:15px}.login-options{font-size:12px}.login-submit{height:54px}.login-features{margin-top:25px}.login-feature{font-size:20px}.login-feature span{font-size:9px;white-space:normal}}
 
+
+/* Query 256: Employee directory column selector and per-column filters */
+.employee-directory-toolbar{align-items:flex-start}.employee-column-picker{position:relative;flex:0 0 auto;font-size:11px;color:#315276;z-index:5}.employee-column-picker summary{list-style:none;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:10px 13px;background:#fff;font-weight:750}.employee-column-picker summary::-webkit-details-marker{display:none}.employee-column-options{position:absolute;right:0;top:42px;width:245px;max-height:320px;overflow:auto;padding:12px;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(20,45,80,.16);display:grid;grid-template-columns:1fr;gap:9px}.employee-column-options label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#334b68}.employee-column-options input{accent-color:var(--blue)}#employeeTable thead tr.employee-filter-row th{padding:5px 6px;background:#fff;min-width:105px}#employeeTable .column-filter{width:100%;min-width:85px;height:29px;padding:4px 6px;font-size:10px;border:1px solid var(--line);border-radius:5px;color:#315276;background:#fff}.employee-directory .table-scroll{overflow:auto}.employee-directory-toolbar .employee-filters{flex:1;min-width:220px}
+
 </style>
 </head>
 <body class="auth-locked auth-checking">
@@ -490,16 +494,23 @@ body.auth-checking .auth-session-loader{display:flex}
             <label>Employee ID <b>*</b><input class="field" id="employeeCode" required placeholder="e.g. 34000120 / EMP00120 / SF-3400120"></label>
             <label>Employee Name <b>*</b><input class="field" id="employeeName" required maxlength="120" placeholder="Enter full name"></label>
             <label>Department <b>*</b><select class="field" id="employeeDepartment" required disabled><option value="">Loading departments...</option></select></label>
+            <label>Category <b>*</b><select class="field" id="employeeCategory" required><option value="">Select category</option><option value="QA">QA</option><option value="Management">Management</option></select></label>
             <label>Designation<input class="field" id="employeeDesignation" maxlength="100" placeholder="Enter designation"></label>
+            <label>Date of Joining<input class="field" type="date" id="employeeJoiningDate"></label>
             <label>Mobile Number<input class="field" id="employeeMobile" maxlength="30" placeholder="01XXXXXXXXX"></label>
-            <label>Status<select class="field" id="employeeStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></label>
+            <label>Blood Group<select class="field" id="employeeBloodGroup"><option value="">Select blood group</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></label>
+            <label>Last Promotion Year<input class="field" type="number" id="employeePromotionYear" min="1900" max="2100" step="1" placeholder="e.g. 2025"></label>
+            <label>Employee Status<select class="field" id="employeeStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option><option value="Resigned">Resigned</option><option value="Terminated">Terminated</option></select></label>
             <div class="employee-form-actions"><button type="button" class="btn" id="cancelEmployee">Cancel</button><button type="submit" class="btn primary" id="saveEmployee">Save Employee</button></div>
           </form>
         </section>
         <section class="panel table-panel employee-directory">
           <div class="panel-head"><div><div class="panel-title">Employee Directory</div><div class="panel-sub">Search and manage employee records</div></div><span class="status info" id="employeeCount">0 records</span></div>
-          <div class="table-toolbar"><div class="filters employee-filters"><input class="field search-field" id="employeeSearch" placeholder="Search ID, name or designation..."><select class="field" id="employeeDeptFilter" disabled><option value="">All departments · Loading...</option></select><select class="field" id="employeeStatusFilter"><option value="">All status</option><option>Active</option><option>Inactive</option></select></div></div>
-          <div class="table-scroll"><table id="employeeTable"><thead><tr><th>Employee ID</th><th>Employee Name</th><th>Department</th><th>Designation</th><th>Mobile</th><th>Status</th><th>Actions</th></tr></thead><tbody id="employeeRows"><tr><td colspan="7" class="employee-empty">No employee records yet. Click “Add Employee” to create the first record.</td></tr></tbody></table></div>
+          <div class="table-toolbar employee-directory-toolbar">
+            <div class="filters employee-filters"><input class="field search-field" id="employeeSearch" placeholder="Search all employee fields..."></div>
+            <details class="employee-column-picker"><summary>⚙ Select Columns</summary><div class="employee-column-options" id="employeeColumnOptions"></div></details>
+          </div>
+          <div class="table-scroll"><table id="employeeTable"><thead id="employeeTableHead"></thead><tbody id="employeeRows"><tr><td colspan="11" class="employee-empty">No employee records yet. Click “Add Employee” to create the first record.</td></tr></tbody></table></div>
           <div class="table-foot"><span id="employeeRowsCount">Showing 0 employees</span><span>Live employee records from Supabase</span></div>
         </section>
         <section class="panel transfer-panel" id="transferPanel" hidden>
@@ -703,28 +714,69 @@ function fillDepartmentSelect(selectId,placeholder){
  employeeDepartments.forEach(d=>{const option=document.createElement('option');option.value=String(d.id);option.textContent=`${d.department_code} · ${d.department_name}`;select.appendChild(option);});
  select.disabled=false;if(previous&&[...select.options].some(o=>o.value===previous))select.value=previous;
 }
-function employeeDbToUi(row){return {id:Number(row.id),code:row.employee_code,name:row.employee_name,departmentId:Number(row.department_id),designation:row.designation||'',mobile:row.mobile_number||'',status:row.is_active?'Active':'Inactive'};}
-async function loadEmployeeDepartments(force=false){
- if(employeeDepartmentsLoaded&&!force)return;
- const {data,error}=await window.factorySupabase.from('departments').select('id,department_code,department_name,is_active').eq('is_active',true).order('id',{ascending:true});
- if(error)throw error;
- employeeDepartments=(data||[]).map(d=>({...d,id:Number(d.id)}));
- if(!employeeDepartments.length)throw new Error('No active departments found in Department Master.');
- fillDepartmentSelect('employeeDepartment','Select department');
- fillDepartmentSelect('employeeDeptFilter','All departments');
- fillDepartmentSelect('transferTo','Select new department');
- empEl('empDepartmentCount').textContent=employeeDepartments.length;
- employeeDepartmentsLoaded=true;
+// Query 256: Employee Master fields, selectable columns, individual column filters.
+const EMPLOYEE_COLUMNS=[
+ {key:'code',label:'Employee ID',default:true,filter:'text'},
+ {key:'name',label:'Employee Name',default:true,filter:'text'},
+ {key:'category',label:'Category',default:true,filter:'select',options:['QA','Management']},
+ {key:'department',label:'Department',default:true,filter:'select'},
+ {key:'designation',label:'Designation',default:true,filter:'text'},
+ {key:'joiningDate',label:'Date of Joining',default:true,filter:'date'},
+ {key:'mobile',label:'Mobile Number',default:true,filter:'text'},
+ {key:'bloodGroup',label:'Blood Group',default:true,filter:'select',options:['A+','A-','B+','B-','AB+','AB-','O+','O-']},
+ {key:'promotionYear',label:'Last Promotion Year',default:true,filter:'text'},
+ {key:'status',label:'Employee Status',default:true,filter:'select',options:['Active','Inactive','Resigned','Terminated']}
+];
+let visibleEmployeeColumns=EMPLOYEE_COLUMNS.map(c=>c.key);
+let employeeColumnFilters={};
+function employeeDbToUi(row){return {id:Number(row.id),code:row.employee_code||'',name:row.employee_name||'',category:row.employee_category||'',departmentId:row.department_id==null?null:Number(row.department_id),designation:row.designation||'',joiningDate:row.date_of_joining||'',mobile:row.mobile_number||'',bloodGroup:row.blood_group||'',promotionYear:row.last_promotion_year??'',status:row.employee_status||(row.is_active?'Active':'Inactive')};}
+function employeeColumnValue(e,key){if(key==='department')return departmentLabel(e.departmentId);return e[key]??'';}
+function employeeFilterControl(col){
+ const value=employeeColumnFilters[col.key]||'';
+ if(col.filter==='select'){
+  const opts=col.key==='department'?employeeDepartments.map(d=>({value:String(d.id),label:`${d.department_code} · ${d.department_name}`})):col.options.map(v=>({value:v,label:v}));
+  return `<select class="column-filter" data-column-filter="${col.key}"><option value="">All</option>${opts.map(o=>`<option value="${esc(o.value)}" ${String(value)===String(o.value)?'selected':''}>${esc(o.label)}</option>`).join('')}</select>`;
+ }
+ return `<input class="column-filter" data-column-filter="${col.key}" type="${col.filter==='date'?'date':'search'}" value="${esc(value)}" placeholder="Filter...">`;
+}
+function renderEmployeeColumnPicker(){
+ const host=empEl('employeeColumnOptions');
+ host.innerHTML=EMPLOYEE_COLUMNS.map(c=>`<label><input type="checkbox" data-visible-column="${c.key}" ${visibleEmployeeColumns.includes(c.key)?'checked':''}> ${esc(c.label)}</label>`).join('');
+}
+function renderEmployeeTableHead(){
+ const cols=EMPLOYEE_COLUMNS.filter(c=>visibleEmployeeColumns.includes(c.key));
+ empEl('employeeTableHead').innerHTML=`<tr>${cols.map(c=>`<th>${esc(c.label)}</th>`).join('')}<th>Actions</th></tr><tr class="employee-filter-row">${cols.map(c=>`<th>${employeeFilterControl(c)}</th>`).join('')}<th><button type="button" class="employee-action" id="clearEmployeeColumnFilters">Clear</button></th></tr>`;
+}
+function renderEmployees(renderHead=true){
+ const q=empEl('employeeSearch').value.trim().toLowerCase();
+ const list=employeeRecords.filter(e=>{
+  const all=[e.code,e.name,e.category,departmentLabel(e.departmentId),e.designation,e.joiningDate,e.mobile,e.bloodGroup,e.promotionYear,e.status].join(' ').toLowerCase();
+  if(q&&!all.includes(q))return false;
+  return EMPLOYEE_COLUMNS.every(c=>{
+   const f=employeeColumnFilters[c.key];if(!f)return true;
+   if(c.key==='department')return String(e.departmentId)===String(f);
+   const v=String(employeeColumnValue(e,c.key)||'').toLowerCase();
+   return c.filter==='date'?v===String(f):v.includes(String(f).toLowerCase());
+  });
+ }).sort((a,b)=>String(a.code).localeCompare(String(b.code),undefined,{numeric:true,sensitivity:'base'}));
+ const cols=EMPLOYEE_COLUMNS.filter(c=>visibleEmployeeColumns.includes(c.key));
+ if(renderHead)renderEmployeeTableHead();
+ empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr>${cols.map(c=>`<td>${c.key==='status'?`<span class="status ${e.status==='Active'?'ok':e.status==='Inactive'?'warn':'bad'}">${esc(employeeColumnValue(e,c.key)||'—')}</span>`:esc(employeeColumnValue(e,c.key)||'—')}</td>`).join('')}<td><button class="employee-action" data-edit="${e.id}">Edit</button><button class="employee-action" data-transfer="${e.id}">Transfer</button></td></tr>`).join(''):`<tr><td colspan="${cols.length+1}" class="employee-empty">No matching employee records found.</td></tr>`;
+ empEl('employeeCount').textContent=list.length+' records';
+ empEl('employeeRowsCount').textContent=`Showing ${list.length} of ${employeeRecords.length} employees`;
+ empEl('empTotal').textContent=employeeRecords.length;
+ empEl('empActive').textContent=employeeRecords.filter(e=>e.status==='Active').length;
+ empEl('empTransfers').textContent=transferRecords.length;
+ empEl('transferRows').innerHTML=transferRecords.length?transferRecords.map(t=>`<tr><td><strong>${esc(t.code)}</strong></td><td>${esc(t.name)}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td>${esc(t.date)}</td><td>${esc(t.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="6" class="employee-empty">No transfer history available.</td></tr>';
 }
 async function loadEmployeeData(){
  if(employeeDataLoading)return;
  if(!window.factorySupabaseReady||!window.factorySupabase){toast('Supabase connection is not ready.');return;}
- employeeDataLoading=true;
- empEl('employeeRows').innerHTML='<tr><td colspan="7" class="employee-empty">Loading employee records from Supabase…</td></tr>';
+ employeeDataLoading=true;empEl('employeeRows').innerHTML='<tr><td colspan="11" class="employee-empty">Loading employee records from Supabase…</td></tr>';
  try{
   await loadEmployeeDepartments();
   const [employeesResult,transfersResult]=await Promise.all([
-   window.factorySupabase.from('employees').select('id,employee_code,employee_name,department_id,designation,mobile_number,is_active,created_at').order('employee_name',{ascending:true}),
+   window.factorySupabase.from('employees').select('id,employee_code,employee_name,department_id,designation,mobile_number,is_active,employee_status,employee_category,date_of_joining,blood_group,last_promotion_year,created_at').order('employee_code',{ascending:true}),
    window.factorySupabase.from('employee_department_transfers').select('id,employee_id,from_department_id,to_department_id,transfer_date,transfer_reason,remarks,created_at').order('created_at',{ascending:false}).limit(50)
   ]);
   if(employeesResult.error)throw employeesResult.error;
@@ -733,32 +785,18 @@ async function loadEmployeeData(){
   const byEmployee=new Map(employeeRecords.map(e=>[String(e.id),e]));
   transferRecords=(transfersResult.data||[]).map(t=>{const e=byEmployee.get(String(t.employee_id));return {id:t.id,employeeId:t.employee_id,code:e?.code||'—',name:e?.name||'Employee record',from:departmentLabel(t.from_department_id),to:departmentLabel(t.to_department_id),date:t.transfer_date,reason:t.transfer_reason||'',remarks:t.remarks||''};});
   renderEmployees();
-  empEl('employeeRowsCount').textContent=`Showing ${employeeRecords.length} of ${employeeRecords.length} employees`;
- }catch(error){
-  console.error('Query 96: Employee Master load failed.',error);
-  empEl('employeeRows').innerHTML=`<tr><td colspan="7" class="employee-empty">${esc(error.message||'Could not load Employee Master data.')}</td></tr>`;
-  toast('Employee Master load failed: '+(error.message||'Unknown error'));
- }finally{employeeDataLoading=false;}
-}
-function renderEmployees(){
- const q=empEl('employeeSearch').value.trim().toLowerCase(),dept=empEl('employeeDeptFilter').value,status=empEl('employeeStatusFilter').value;
- const list=employeeRecords.filter(e=>(!q||[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile].join(' ').toLowerCase().includes(q))&&(!dept||String(e.departmentId)===String(dept))&&(!status||e.status===status));
- empEl('employeeRows').innerHTML=list.length?list.map(e=>`<tr><td><strong>${esc(e.code)}</strong></td><td>${esc(e.name)}</td><td>${esc(departmentLabel(e.departmentId))}</td><td>${esc(e.designation||'—')}</td><td>${esc(e.mobile||'—')}</td><td><span class="status ${e.status==='Active'?'ok':'bad'}">${esc(e.status)}</span></td><td><button class="employee-action" data-edit="${e.id}">Edit</button><button class="employee-action" data-transfer="${e.id}">Transfer</button><button class="employee-action" data-delete="${e.id}" style="color:#c33950">Delete</button></td></tr>`).join(''):'<tr><td colspan="7" class="employee-empty">No matching employee records found.</td></tr>';
- empEl('employeeCount').textContent=list.length+' records';
- empEl('employeeRowsCount').textContent=`Showing ${list.length} of ${employeeRecords.length} employees`;
- empEl('empTotal').textContent=employeeRecords.length;
- empEl('empActive').textContent=employeeRecords.filter(e=>e.status==='Active').length;
- empEl('empTransfers').textContent=transferRecords.length;
- empEl('transferRows').innerHTML=transferRecords.length?transferRecords.map(t=>`<tr><td><strong>${esc(t.code)}</strong></td><td>${esc(t.name)}</td><td>${esc(t.from)}</td><td>${esc(t.to)}</td><td>${esc(t.date)}</td><td>${esc(t.reason||'—')}</td></tr>`).join(''):'<tr><td colspan="6" class="employee-empty">No transfer history available.</td></tr>';
+ }catch(error){console.error('Query 256: Employee Master load failed.',error);empEl('employeeRows').innerHTML=`<tr><td colspan="11" class="employee-empty">${esc(error.message||'Could not load Employee Master data.')}</td></tr>`;toast('Employee Master load failed: '+(error.message||'Unknown error'));}
+ finally{employeeDataLoading=false;}
 }
 function openEmployeeForm(record){
  empEl('employeeForm').reset();empEl('employeeRecordId').value=record?.id||'';
  empEl('employeeCode').value=record?.code||'';empEl('employeeCode').disabled=!!record;
  empEl('employeeName').value=record?.name||'';empEl('employeeDepartment').value=record?.departmentId||'';
- empEl('employeeDesignation').value=record?.designation||'';empEl('employeeMobile').value=record?.mobile||'';
+ empEl('employeeCategory').value=record?.category||'';empEl('employeeDesignation').value=record?.designation||'';
+ empEl('employeeJoiningDate').value=record?.joiningDate||'';empEl('employeeMobile').value=record?.mobile||'';
+ empEl('employeeBloodGroup').value=record?.bloodGroup||'';empEl('employeePromotionYear').value=record?.promotionYear||'';
  empEl('employeeStatus').value=record?.status||'Active';
- empEl('employeeFormTitle').textContent=record?'Edit Employee':'New Employee';
- empEl('employeeFormPanel').hidden=false;empEl('employeeFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
+ empEl('employeeFormTitle').textContent=record?'Edit Employee':'New Employee';empEl('employeeFormPanel').hidden=false;empEl('employeeFormPanel').scrollIntoView({behavior:'smooth',block:'start'});
 }
 function closeEmployeeForm(){empEl('employeeFormPanel').hidden=true;empEl('employeeCode').disabled=false;}
 empEl('newEmployeeBtn').addEventListener('click',()=>openEmployeeForm(null));
@@ -766,24 +804,23 @@ empEl('closeEmployeeForm').addEventListener('click',closeEmployeeForm);
 empEl('cancelEmployee').addEventListener('click',closeEmployeeForm);
 empEl('employeeForm').addEventListener('submit',async ev=>{
  ev.preventDefault();if(employeeSaveBusy)return;
- const recordId=empEl('employeeRecordId').value;
- const code=empEl('employeeCode').value.trim();
- const name=empEl('employeeName').value.trim();
- const departmentId=Number(empEl('employeeDepartment').value);
- if(!code||!name||!departmentById(departmentId)){toast('Employee ID, Employee Name and a valid Department are required.');return;}
- const duplicate=employeeRecords.some(e=>e.code.toLowerCase()===code.toLowerCase()&&String(e.id)!==String(recordId));
- if(duplicate){toast('This Employee ID already exists.');return;}
- const payload={employee_code:code,employee_name:name,department_id:departmentId,designation:empEl('employeeDesignation').value.trim()||null,mobile_number:empEl('employeeMobile').value.trim()||null,is_active:empEl('employeeStatus').value==='Active'};
+ const recordId=empEl('employeeRecordId').value,code=empEl('employeeCode').value.trim(),name=empEl('employeeName').value.trim(),departmentId=Number(empEl('employeeDepartment').value),category=empEl('employeeCategory').value;
+ if(!code||!name||!category||!departmentById(departmentId)){toast('Employee ID, Name, Category and Department are required.');return;}
+ const duplicate=employeeRecords.some(e=>e.code.toLowerCase()===code.toLowerCase()&&String(e.id)!==String(recordId));if(duplicate){toast('This Employee ID already exists.');return;}
+ const statusValue=empEl('employeeStatus').value,promotionRaw=empEl('employeePromotionYear').value.trim(),promotionYear=promotionRaw===''?null:Number(promotionRaw);
+ if(promotionYear!==null&&(!Number.isInteger(promotionYear)||promotionYear<1900||promotionYear>2100)){toast('Enter a valid promotion year between 1900 and 2100.');return;}
+ const payload={employee_code:code,employee_name:name,department_id:departmentId,employee_category:category,designation:empEl('employeeDesignation').value.trim()||null,mobile_number:empEl('employeeMobile').value.trim()||null,date_of_joining:empEl('employeeJoiningDate').value||null,blood_group:empEl('employeeBloodGroup').value||null,last_promotion_year:promotionYear,employee_status:statusValue,is_active:statusValue==='Active'};
  employeeSaveBusy=true;const saveBtn=empEl('saveEmployee');saveBtn.disabled=true;saveBtn.textContent='Saving…';
- try{
-  let result;
-  if(recordId)result=await window.factorySupabase.from('employees').update(payload).eq('id',Number(recordId)).select('id').single();
-  else result=await window.factorySupabase.from('employees').insert(payload).select('id').single();
-  if(result.error)throw result.error;
-  await loadEmployeeData();closeEmployeeForm();toast(recordId?'Employee updated successfully.':'Employee added successfully.');
- }catch(error){console.error('Query 96: Employee save failed.',error);toast(error.code==='23505'?'Employee ID already exists in the database.':(error.message||'Employee could not be saved.'));}
+ try{let result;if(recordId)result=await window.factorySupabase.from('employees').update(payload).eq('id',Number(recordId)).select('id').single();else result=await window.factorySupabase.from('employees').insert(payload).select('id').single();if(result.error)throw result.error;await loadEmployeeData();closeEmployeeForm();toast(recordId?'Employee updated successfully.':'Employee added successfully.');}
+ catch(error){console.error('Query 256: Employee save failed.',error);toast(error.code==='23505'?'Employee ID already exists in the database.':(error.message||'Employee could not be saved.'));}
  finally{employeeSaveBusy=false;saveBtn.disabled=false;saveBtn.textContent='Save Employee';}
 });
+renderEmployeeColumnPicker();
+empEl('employeeColumnOptions').addEventListener('change',ev=>{const cb=ev.target.closest('[data-visible-column]');if(!cb)return;const key=cb.dataset.visibleColumn;if(cb.checked){if(!visibleEmployeeColumns.includes(key))visibleEmployeeColumns.push(key);}else{visibleEmployeeColumns=visibleEmployeeColumns.filter(k=>k!==key);}renderEmployees();});
+empEl('employeeTableHead').addEventListener('input',ev=>{const c=ev.target.closest('[data-column-filter]');if(!c)return;employeeColumnFilters[c.dataset.columnFilter]=c.value;renderEmployees(false);});
+empEl('employeeTableHead').addEventListener('change',ev=>{const c=ev.target.closest('[data-column-filter]');if(!c)return;employeeColumnFilters[c.dataset.columnFilter]=c.value;renderEmployees();});
+empEl('employeeTableHead').addEventListener('click',ev=>{if(ev.target.id==='clearEmployeeColumnFilters'){employeeColumnFilters={};renderEmployees();}});
+empEl('employeeSearch').addEventListener('input',renderEmployees);
 empEl('employeeRows').addEventListener('click',async ev=>{
  const edit=ev.target.closest('[data-edit]'),transfer=ev.target.closest('[data-transfer]'),del=ev.target.closest('[data-delete]');
  if(edit){const r=employeeRecords.find(e=>String(e.id)===edit.dataset.edit);if(r)openEmployeeForm(r);return;}
@@ -876,17 +913,17 @@ empEl('transferForm').addEventListener('submit',async ev=>{
  }catch(error){console.error('Query 96: Department transfer failed.',error);toast(error.message||'Department transfer failed.');}
  finally{submit.disabled=false;submit.textContent='Save Transfer';}
 });
-['employeeSearch','employeeDeptFilter','employeeStatusFilter'].forEach(id=>empEl(id).addEventListener(id==='employeeSearch'?'input':'change',renderEmployees));
+
 empEl('employeeExport').addEventListener('click',()=>{
- const cols=['Employee ID','Employee Name','Department','Designation','Mobile','Status'];
- const rows=employeeRecords.map(e=>[e.code,e.name,departmentLabel(e.departmentId),e.designation,e.mobile,e.status]);
- const csv=[cols,...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
- const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='employee-master.csv';a.click();URL.revokeObjectURL(url);
+ const cols=EMPLOYEE_COLUMNS.filter(c=>visibleEmployeeColumns.includes(c.key));
+ const rows=employeeRecords.slice().sort((a,b)=>String(a.code).localeCompare(String(b.code),undefined,{numeric:true,sensitivity:'base'})).map(e=>cols.map(c=>employeeColumnValue(e,c.key)));
+ const csv=[cols.map(c=>c.label),...rows].map(r=>r.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const url=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='employee-master-selected-columns.csv';a.click();URL.revokeObjectURL(url);
 });
 renderEmployees();
 
 
-// Query 255: Supabase Admin Authentication Loading Timeout Fix
+// Query 256: Employee Master selectable columns and per-column filters\n// Save Name: index_Query256_Employee_Master_Column_Selection.html\n// Query 255: Supabase Admin Authentication Loading Timeout Fix
 // Save Name: index_Query255_Admin_Auth_Loading_Fix.html
 const loginForm=document.getElementById('adminLoginForm');
 const loginEmail=document.getElementById('loginEmail');
